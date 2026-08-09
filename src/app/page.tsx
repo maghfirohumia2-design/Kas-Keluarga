@@ -112,55 +112,65 @@ export default function Home() {
         </Link>
       </header>
 
-      <h3 className="font-bold text-slate-800 mb-4 px-1 text-lg">Pilih Menu Kas</h3>
-
-      {/* Grid Kotak-Kotak (Gaya Shopee) */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Grid Menu Kas (Gaya Icon Shopee) */}
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
         {accountsError && (
-          <div className="col-span-2 p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
+          <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 mb-4">
             Gagal mengambil data dari database. Pastikan koneksi aman.
           </div>
         )}
 
-        {accounts?.map((account, index) => (
-          <Link 
-            href={`/kas/${account.id}`} 
-            key={account.id} 
-            className="group block relative overflow-hidden bg-white rounded-3xl shadow-sm border border-slate-100 transition-all hover:shadow-md hover:border-emerald-200 active:scale-95"
-          >
-            {/* Top Color Banner */}
-            <div className={`h-24 w-full bg-gradient-to-br ${getGradientForAccount(index)} p-4 flex flex-col justify-end relative overflow-hidden`}>
-              <div className="absolute top-[-10px] right-[-10px] opacity-20 transform group-hover:scale-110 transition-transform duration-300">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-y-6 gap-x-2">
+          {accounts?.map((account) => (
+            <Link 
+              href={`/kas/${account.id}`} 
+              key={account.id} 
+              className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
+            >
+              {/* Icon Box */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-emerald-100 transition-colors border border-emerald-100/50 shadow-inner text-emerald-600 group-hover:text-emerald-700">
                 {getIconForAccount(account.name)}
               </div>
-              <div className="bg-white/20 backdrop-blur-md w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner mb-2 border border-white/10">
-                {getIconForAccount(account.name)}
-              </div>
-            </div>
-            
-            {/* Bottom Content */}
-            <div className="p-4 pt-3">
-              <h2 className="font-bold text-slate-800 text-[15px] leading-tight mb-1 line-clamp-1">{account.name}</h2>
-              <p className={`font-semibold text-sm ${balances[account.id] < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                Rp {balances[account.id]?.toLocaleString('id-ID') || 0}
-              </p>
               
-              <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between text-slate-400 text-xs font-medium group-hover:text-emerald-500 transition-colors">
-                <span>Buka Kas</span>
-                <ArrowRight size={14} />
-              </div>
-            </div>
-          </Link>
-        ))}
+              {/* Text / Title */}
+              <span className="text-[10px] sm:text-xs font-bold text-slate-700 text-center uppercase tracking-wide px-1 line-clamp-2 leading-tight">
+                {account.name}
+              </span>
+              
+              {/* Balance */}
+              <span className={`text-[9px] sm:text-[10px] mt-1 font-bold ${balances[account.id] < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                {balances[account.id] < 0 ? '-' : ''}Rp {Math.abs(balances[account.id] || 0).toLocaleString('id-ID')}
+              </span>
+            </Link>
+          ))}
+          
+          {/* Menu "Tambah Kas" atau Placeholder kosong (Opsional) */}
+          {accounts && accounts.length > 0 && (
+             <Link href="#" onClick={(e) => { e.preventDefault(); alert('Untuk menambah Kas baru, silakan tambahkan di Database Supabase Anda.'); }} className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform">
+               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-slate-100 transition-colors border border-slate-100 shadow-inner text-slate-400 group-hover:text-slate-500">
+                 <div className="grid grid-cols-2 gap-1 w-6 h-6">
+                   <div className="bg-current rounded-sm"></div>
+                   <div className="bg-current rounded-sm"></div>
+                   <div className="bg-current rounded-sm"></div>
+                   <div className="bg-current rounded-sm rotate-45 transform scale-75"></div>
+                 </div>
+               </div>
+               <span className="text-[10px] sm:text-xs font-bold text-slate-700 text-center uppercase tracking-wide px-1">
+                 LAINNYA
+               </span>
+             </Link>
+          )}
+        </div>
+
+        {(!accounts || accounts.length === 0) && !accountsError && (
+          <div className="py-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-2xl">
+            <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
+            <p className="font-medium text-slate-600">Belum ada Menu Kas</p>
+            <p className="text-xs mt-1">Tambahkan dari database.</p>
+          </div>
+        )}
       </div>
 
-      {(!accounts || accounts.length === 0) && !accountsError && (
-        <div className="p-8 text-center text-slate-500 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm mt-4">
-          <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
-          <p className="font-medium text-slate-600">Belum ada Menu Kas</p>
-          <p className="text-xs mt-1">Anda perlu menambahkannya di database.</p>
-        </div>
-      )}
     </main>
   );
 }
