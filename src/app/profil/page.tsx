@@ -1,17 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell } from "lucide-react";
+import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function ProfilPage() {
-  const [email, setEmail] = useState<string | null>("Memuat...");
+  const [phone, setPhone] = useState<string | null>("Memuat...");
+  const [isChangingPin, setIsChangingPin] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [pinMessage, setPinMessage] = useState<{text: string, type: "success" | "error"} | null>(null);
+  const [loadingPin, setLoadingPin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setEmail(user.email ?? "Tidak ada email");
+      if (user && user.email) {
+        // Tampilkan hanya nomor HP, buang bagian @kaskeluarga.com
+        const phoneOnly = user.email.replace("@kaskeluarga.com", "");
+        setPhone(phoneOnly);
+      } else {
+        setPhone("Tidak ada nomor");
+      }
     });
   }, []);
 
@@ -19,7 +29,33 @@ export default function ProfilPage() {
     if (!window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) return;
     
     await supabase.auth.signOut();
-    // AuthProvider akan otomatis mendeteksi perubahan state dan mengarahkan ke halaman login
+  };
+
+  const handleChangePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPin.length < 6) {
+      setPinMessage({ text: "PIN harus 6 digit angka.", type: "error" });
+      return;
+    }
+
+    setLoadingPin(true);
+    setPinMessage(null);
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPin });
+      if (error) throw error;
+
+      setPinMessage({ text: "PIN berhasil diubah!", type: "success" });
+      setTimeout(() => {
+        setIsChangingPin(false);
+        setNewPin("");
+        setPinMessage(null);
+      }, 2000);
+    } catch (error: any) {
+      setPinMessage({ text: error.message || "Gagal mengubah PIN.", type: "error" });
+    } finally {
+      setLoadingPin(false);
+    }
   };
 
   return (
@@ -41,7 +77,9 @@ export default function ProfilPage() {
         </div>
 
         <h2 className="text-xl font-bold text-slate-800">Keluarga Basmalah</h2>
-        <p className="text-sm text-slate-500 mb-6">{email}</p>
+        <p className="text-sm font-medium text-slate-500 mb-6 bg-slate-50 px-4 py-1 rounded-full border border-slate-100">
+          {phone}
+        </p>
 
         <div className="flex gap-4 w-full">
           <div className="flex-1 bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
@@ -55,27 +93,53 @@ export default function ProfilPage() {
         </div>
       </div>
 
-      {/* Menu List */}
-      <h3 className="font-semibold text-slate-800 mb-4 ml-2">Pengaturan Umum</h3>
-      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 space-y-1 mb-8">
-        <button className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left">
-          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Bell size={20} />
+      {/* Ganti PIN Section */}
+      <h3 className="font-semibold text-slate-800 mb-4 ml-2">Keamanan</h3>
+      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden transition-all">
+        <button 
+          onClick={() => setIsChangingPin(!isChangingPin)}
+          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
+        >
+          <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <KeyRound size={20} />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-slate-800 text-sm">Notifikasi</p>
-            <p className="text-xs text-slate-500">Atur pemberitahuan transaksi</p>
+            <p className="font-semibold text-slate-800 text-sm">Ubah PIN Rahasia</p>
+            <p className="text-xs text-slate-500">Ganti PIN login Anda</p>
           </div>
         </button>
-        <button className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left">
-          <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center">
-            <Settings size={20} />
+
+        {isChangingPin && (
+          <div className="p-4 pt-2 border-t border-slate-50 mt-2">
+            {pinMessage && (
+              <div className={`p-3 rounded-xl text-xs font-medium mb-4 ${pinMessage.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
+                {pinMessage.text}
+              </div>
+            )}
+            <form onSubmit={handleChangePin} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">PIN Baru (6 Digit)</label>
+                <input
+                  type="password"
+                  maxLength={6}
+                  inputMode="numeric"
+                  required
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="------"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest font-bold text-slate-800"
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={loadingPin || newPin.length < 6}
+                className="h-[46px] px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 flex items-center justify-center shrink-0"
+              >
+                {loadingPin ? <Loader2 size={18} className="animate-spin" /> : "Simpan"}
+              </button>
+            </form>
           </div>
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 text-sm">Pengaturan Aplikasi</p>
-            <p className="text-xs text-slate-500">Ubah tema & bahasa</p>
-          </div>
-        </button>
+        )}
       </div>
 
       <h3 className="font-semibold text-slate-800 mb-4 ml-2">Lainnya</h3>
@@ -95,7 +159,7 @@ export default function ProfilPage() {
           </div>
           <div className="flex-1">
             <p className="font-semibold text-slate-800 text-sm">Versi Aplikasi</p>
-            <p className="text-xs text-slate-500">v1.0.0 (Dibuat dengan ❤️)</p>
+            <p className="text-xs text-slate-500">v1.1.0 (Login HP & PIN)</p>
           </div>
         </div>
       </div>

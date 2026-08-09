@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Mail, Lock, Wallet } from "lucide-react";
+import { Loader2, Phone, Lock, Wallet } from "lucide-react";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
 
@@ -16,21 +16,31 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
+    // Trik: Mengubah Nomor HP menjadi format email fiktif agar bisa menggunakan fitur bawaan Supabase
+    const dummyEmail = `${phone}@kaskeluarga.com`;
+
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pin });
         if (error) throw error;
         // AuthProvider akan otomatis mendeteksi perubahan sesi dan mengarahkan ke halaman Beranda
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ email: dummyEmail, password: pin });
         if (error) throw error;
         setMessage({
-          text: "Pendaftaran berhasil! Jika pengaturan email confirmation aktif, periksa email Anda.",
+          text: "Pendaftaran berhasil! Silakan langsung login.",
           type: "success"
         });
+        setIsLogin(true); // Langsung pindahkan ke mode login
       }
     } catch (error: any) {
-      setMessage({ text: error.message || "Terjadi kesalahan", type: "error" });
+      if (error.message.includes("Invalid login credentials")) {
+        setMessage({ text: "Nomor HP atau PIN salah.", type: "error" });
+      } else if (error.message.includes("Password should be at least")) {
+        setMessage({ text: "PIN minimal harus 6 karakter.", type: "error" });
+      } else {
+        setMessage({ text: error.message || "Terjadi kesalahan", type: "error" });
+      }
     } finally {
       setLoading(false);
     }
@@ -61,31 +71,33 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Email</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nomor HP</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
-                type="email"
+                type="tel"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@contoh.com"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                placeholder="Contoh: 081929991445"
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium transition-all text-slate-800"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">PIN Rahasia</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimal 6 karakter"
-                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium transition-all text-slate-800"
+                maxLength={6}
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                placeholder="6 Digit Angka Rahasia"
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold tracking-widest transition-all text-slate-800"
               />
             </div>
           </div>
