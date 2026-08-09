@@ -1,7 +1,27 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell } from "lucide-react";
-import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function ProfilPage() {
+  const [email, setEmail] = useState<string | null>("Memuat...");
+  const router = useRouter();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setEmail(user.email ?? "Tidak ada email");
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    if (!window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) return;
+    
+    await supabase.auth.signOut();
+    // AuthProvider akan otomatis mendeteksi perubahan state dan mengarahkan ke halaman login
+  };
+
   return (
     <main className="p-6 bg-slate-50 min-h-screen pb-24">
       <header className="mb-8 pt-4">
@@ -21,7 +41,7 @@ export default function ProfilPage() {
         </div>
 
         <h2 className="text-xl font-bold text-slate-800">Keluarga Basmalah</h2>
-        <p className="text-sm text-slate-500 mb-6">Akun Bersama Suami & Istri</p>
+        <p className="text-sm text-slate-500 mb-6">{email}</p>
 
         <div className="flex gap-4 w-full">
           <div className="flex-1 bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
@@ -38,7 +58,6 @@ export default function ProfilPage() {
       {/* Menu List */}
       <h3 className="font-semibold text-slate-800 mb-4 ml-2">Pengaturan Umum</h3>
       <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 space-y-1 mb-8">
-        
         <button className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left">
           <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
             <Bell size={20} />
@@ -48,7 +67,6 @@ export default function ProfilPage() {
             <p className="text-xs text-slate-500">Atur pemberitahuan transaksi</p>
           </div>
         </button>
-
         <button className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left">
           <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center">
             <Settings size={20} />
@@ -58,11 +76,10 @@ export default function ProfilPage() {
             <p className="text-xs text-slate-500">Ubah tema & bahasa</p>
           </div>
         </button>
-
       </div>
 
       <h3 className="font-semibold text-slate-800 mb-4 ml-2">Lainnya</h3>
-      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 space-y-1">
+      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 space-y-1 mb-8">
         <button className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left">
           <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
             <HelpCircle size={20} />
@@ -72,7 +89,6 @@ export default function ProfilPage() {
             <p className="text-xs text-slate-500">Panduan penggunaan aplikasi</p>
           </div>
         </button>
-        
         <div className="p-4 flex items-center gap-4 bg-slate-50 rounded-2xl">
           <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
             <Heart size={20} />
@@ -83,7 +99,15 @@ export default function ProfilPage() {
           </div>
         </div>
       </div>
-      
+
+      {/* Tombol Logout */}
+      <button 
+        onClick={handleLogout}
+        className="w-full p-4 flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl transition-colors"
+      >
+        <LogOut size={20} />
+        Keluar Akun (Logout)
+      </button>
     </main>
   );
 }

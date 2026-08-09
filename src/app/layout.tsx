@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0", // Mencegah zoom di mobile
 };
 
+import AuthProvider from "@/components/AuthProvider";
 import BottomNav from "@/components/BottomNav";
 
 export default function RootLayout({
@@ -20,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${inter.className} bg-slate-100`}>
-        <div className="mobile-container pb-24">
-          {children}
-          <BottomNav />
-        </div>
+        <AuthProvider>
+          <div className="mobile-container pb-24">
+            {children}
+            <BottomNav />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );
