@@ -80,7 +80,7 @@ export default function LoginPage() {
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                placeholder="Contoh: 081929991445"
+                placeholder="Contoh: 081234567890"
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium transition-all text-slate-800"
               />
             </div>
