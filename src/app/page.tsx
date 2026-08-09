@@ -133,13 +133,8 @@ export default function Home() {
               </div>
               
               {/* Text / Title */}
-              <span className="text-[10px] sm:text-xs font-bold text-slate-700 text-center uppercase tracking-wide px-1 line-clamp-2 leading-tight">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-700 text-center uppercase tracking-wide px-1 line-clamp-2 leading-tight mt-1">
                 {account.name}
-              </span>
-              
-              {/* Balance */}
-              <span className={`text-[9px] sm:text-[10px] mt-1 font-bold ${balances[account.id] < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                {balances[account.id] < 0 ? '-' : ''}Rp {Math.abs(balances[account.id] || 0).toLocaleString('id-ID')}
               </span>
             </Link>
           ))}

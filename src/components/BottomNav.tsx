@@ -18,11 +18,6 @@ export default function BottomNav() {
         <span className="text-[10px] font-medium">Beranda</span>
       </Link>
       
-      <Link href="/transaksi" className={`flex flex-col items-center gap-1 ${pathname === '/transaksi' ? 'text-emerald-600' : 'text-slate-400'}`}>
-        <ListOrdered size={24} className={pathname === '/transaksi' ? 'fill-emerald-100' : ''} />
-        <span className="text-[10px] font-medium">Transaksi</span>
-      </Link>
-      
       <Link href="/profil" className={`flex flex-col items-center gap-1 ${pathname === '/profil' ? 'text-emerald-600' : 'text-slate-400'}`}>
         <User size={24} className={pathname === '/profil' ? 'fill-emerald-100' : ''} />
         <span className="text-[10px] font-medium">Profil</span>

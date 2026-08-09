@@ -70,6 +70,18 @@ export default function KasDashboardPage() {
     fetchData();
   }, [accountId]);
 
+  // Kelompokkan transaksi berdasarkan tanggal
+  const groupedTransactions = transactions.reduce((groups: any, tx: any) => {
+    const dateStr = new Date(tx.date).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    if (!groups[dateStr]) {
+      groups[dateStr] = [];
+    }
+    groups[dateStr].push(tx);
+    return groups;
+  }, {});
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -155,37 +167,44 @@ export default function KasDashboardPage() {
           </span>
         </div>
 
-        <div className="space-y-3">
-          {transactions.map((tx) => (
-            <div key={tx.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer">
-              <div className="flex gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner border ${
-                  tx.type === 'income' 
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors' 
-                    : 'bg-red-50 text-red-500 border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors'
-                }`}>
-                  {tx.type === 'income' ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
-                </div>
-                <div>
-                  <p className="font-bold text-slate-800 text-sm line-clamp-1">{tx.description}</p>
-                  <p className="text-xs text-slate-400 mt-0.5 font-medium">
-                    {new Date(tx.date).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right shrink-0 ml-2">
-                <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {tx.type === 'income' ? '+' : '-'}Rp {Number(tx.amount).toLocaleString('id-ID')}
-                </p>
-                {tx.receipt_url && (
-                  <span className="inline-block mt-1 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-semibold border border-slate-200">
-                    Ada Nota
-                  </span>
-                )}
+        <div className="space-y-6">
+          {Object.keys(groupedTransactions).map((date) => (
+            <div key={date}>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-2">
+                {date}
+              </h4>
+              <div className="space-y-3">
+                {groupedTransactions[date].map((tx: any) => (
+                  <div key={tx.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer">
+                    <div className="flex gap-3">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner border ${
+                        tx.type === 'income' 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors' 
+                          : 'bg-red-50 text-red-500 border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors'
+                      }`}>
+                        {tx.type === 'income' ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800 text-sm line-clamp-1">{tx.description}</p>
+                        <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                          {new Date(tx.created_at).toLocaleTimeString('id-ID', {
+                            hour: '2-digit', minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {tx.type === 'income' ? '+' : '-'}Rp {Number(tx.amount).toLocaleString('id-ID')}
+                      </p>
+                      {tx.receipt_url && (
+                        <span className="inline-block mt-1 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-semibold border border-slate-200">
+                          Ada Nota
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
