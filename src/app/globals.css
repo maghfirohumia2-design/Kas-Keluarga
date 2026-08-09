@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+}
+
+body {
+  background-color: var(--color-background);
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile container for desktop view to keep app looking like a mobile app */
+.mobile-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: var(--color-surface);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow-x: hidden;
+}
