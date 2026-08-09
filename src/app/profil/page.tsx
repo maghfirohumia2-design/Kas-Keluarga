@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function ProfilPage() {
   const [phone, setPhone] = useState<string | null>("Memuat...");
   const [isChangingPin, setIsChangingPin] = useState(false);
-  const [newPin, setNewPin] = useState("");
+  const [pin, setPin] = useState<string[]>(["", "", "", "", "", ""]);
   const [pinMessage, setPinMessage] = useState<{text: string, type: "success" | "error"} | null>(null);
   const [loadingPin, setLoadingPin] = useState(false);
   const router = useRouter();
+
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -31,27 +33,80 @@ export default function ProfilPage() {
     await supabase.auth.signOut();
   };
 
-  const handleChangePin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPin.length < 6) {
-      setPinMessage({ text: "PIN harus 6 digit angka.", type: "error" });
-      return;
-    }
+  const handlePinChange = (index: number, value: string) => {
+    const val = value.replace(/\D/g, "").slice(-1);
+    
+    if (val) {
+      const newPin = [...pin];
+      newPin[index] = val;
+      setPin(newPin);
 
+      // Pindah ke kotak berikutnya
+      if (index < 5) {
+        inputRefs.current[index + 1]?.focus();
+      } else {
+        // Jika kotak terakhir terisi, langsung eksekusi simpan PIN
+        const fullPin = newPin.join("");
+        if (fullPin.length === 6) {
+          executeChangePin(fullPin);
+        }
+      }
+    }
+  };
+
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      const newPin = [...pin];
+      
+      if (pin[index] === "") {
+        if (index > 0) {
+          newPin[index - 1] = "";
+          setPin(newPin);
+          inputRefs.current[index - 1]?.focus();
+        }
+      } else {
+        newPin[index] = "";
+        setPin(newPin);
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pastedData.length > 0) {
+      const newPin = [...pin];
+      for (let i = 0; i < pastedData.length; i++) {
+        newPin[i] = pastedData[i];
+      }
+      setPin(newPin);
+      
+      if (pastedData.length === 6) {
+        inputRefs.current[5]?.focus();
+        executeChangePin(pastedData);
+      } else {
+        inputRefs.current[pastedData.length]?.focus();
+      }
+    }
+  };
+
+  const executeChangePin = async (fullPin: string) => {
     setLoadingPin(true);
     setPinMessage(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPin });
+      const { error } = await supabase.auth.updateUser({ password: fullPin });
       if (error) throw error;
 
       setPinMessage({ text: "PIN berhasil diubah!", type: "success" });
       setTimeout(() => {
         setIsChangingPin(false);
-        setNewPin("");
+        setPin(["", "", "", "", "", ""]);
         setPinMessage(null);
       }, 2000);
     } catch (error: any) {
+      setPin(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
       setPinMessage({ text: error.message || "Gagal mengubah PIN.", type: "error" });
     } finally {
       setLoadingPin(false);
@@ -96,48 +151,73 @@ export default function ProfilPage() {
       {/* Ganti PIN Section */}
       <h3 className="font-semibold text-slate-800 mb-4 ml-2">Keamanan</h3>
       <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden transition-all">
-        <button 
-          onClick={() => setIsChangingPin(!isChangingPin)}
-          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
-        >
-          <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <KeyRound size={20} />
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 text-sm">Ubah PIN Rahasia</p>
-            <p className="text-xs text-slate-500">Ganti PIN login Anda</p>
-          </div>
-        </button>
+        {!isChangingPin ? (
+          <button 
+            onClick={() => {
+              setIsChangingPin(true);
+              setTimeout(() => inputRefs.current[0]?.focus(), 100);
+            }}
+            className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
+          >
+            <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <KeyRound size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-slate-800 text-sm">Ubah PIN Rahasia</p>
+              <p className="text-xs text-slate-500">Ganti PIN login Anda</p>
+            </div>
+          </button>
+        ) : (
+          <div className="p-4 bg-purple-50/50 rounded-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Masukkan PIN Baru</p>
+                <p className="text-[10px] text-slate-500">Ketik 6 digit PIN pengganti</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsChangingPin(false);
+                  setPin(["", "", "", "", "", ""]);
+                  setPinMessage(null);
+                }}
+                className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-        {isChangingPin && (
-          <div className="p-4 pt-2 border-t border-slate-50 mt-2">
             {pinMessage && (
               <div className={`p-3 rounded-xl text-xs font-medium mb-4 ${pinMessage.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
                 {pinMessage.text}
               </div>
             )}
-            <form onSubmit={handleChangePin} className="flex gap-2 items-end">
-              <div className="flex-1">
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">PIN Baru (6 Digit)</label>
+            
+            <div 
+              className="flex justify-between gap-1.5 mb-2"
+              onPaste={handlePaste}
+            >
+              {pin.map((digit, idx) => (
                 <input
+                  key={idx}
+                  ref={(el) => { inputRefs.current[idx] = el; }}
                   type="password"
-                  maxLength={6}
                   inputMode="numeric"
-                  required
-                  value={newPin}
-                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
-                  placeholder="------"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest font-bold text-slate-800"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handlePinChange(idx, e.target.value)}
+                  onKeyDown={(e) => handlePinKeyDown(idx, e)}
+                  disabled={loadingPin}
+                  className="w-full aspect-square text-center text-xl font-bold bg-white border border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-slate-800"
                 />
+              ))}
+            </div>
+
+            {loadingPin && (
+              <div className="flex items-center justify-center text-purple-600 gap-2 mt-4 mb-2 animate-pulse">
+                <Loader2 className="animate-spin" size={16} />
+                <span className="text-xs font-semibold">Menyimpan...</span>
               </div>
-              <button 
-                type="submit"
-                disabled={loadingPin || newPin.length < 6}
-                className="h-[46px] px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 flex items-center justify-center shrink-0"
-              >
-                {loadingPin ? <Loader2 size={18} className="animate-spin" /> : "Simpan"}
-              </button>
-            </form>
+            )}
           </div>
         )}
       </div>
@@ -159,7 +239,7 @@ export default function ProfilPage() {
           </div>
           <div className="flex-1">
             <p className="font-semibold text-slate-800 text-sm">Versi Aplikasi</p>
-            <p className="text-xs text-slate-500">v1.1.0 (Login HP & PIN)</p>
+            <p className="text-xs text-slate-500">v1.2.0 (Login UI ala WA)</p>
           </div>
         </div>
       </div>
