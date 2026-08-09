@@ -1,30 +1,10 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Wallet, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
 import Link from "next/link";
-
-export const revalidate = 0;
-
-export default async function Home() {
-  // Fetch data kas dari Supabase
-  const { data: accounts, error: accountsError } = await supabase
-    .from('accounts')
-    .select('*')
-    .order('created_at', { ascending: true });
-
-  // Fetch semua transaksi untuk menghitung saldo
-  const { data: transactions, error: txError } = await supabase
-    .from('transactions')
-    .select('account_id, type, amount');
-
-  // Menghitung saldo tiap kas
-  const balances: Record<string, number> = {};
-  let totalBalance = 0;
-
-  if (accounts) {
-    accounts.forEach(acc => { balances[acc.id] = 0; });
-  }
 import Image from "next/image";
-
 export default function Home() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
