@@ -109,10 +109,18 @@ export default function BaruTransaksi() {
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">Rp</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  if (!val) {
+                    setAmount("");
+                  } else {
+                    setAmount(parseInt(val, 10).toLocaleString("id-ID"));
+                  }
+                }}
                 placeholder="0"
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-lg font-bold text-slate-800 transition-all"
               />
