@@ -112,17 +112,6 @@ export default function Home() {
         </Link>
       </header>
 
-      {/* Mini Banner Total (Tidak sebesar dulu) */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-8 flex justify-between items-center">
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Keseluruhan</p>
-          <p className="text-xl font-bold text-slate-800">Rp {totalBalance.toLocaleString('id-ID')}</p>
-        </div>
-        <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
-          <Wallet size={20} />
-        </div>
-      </div>
-
       <h3 className="font-bold text-slate-800 mb-4 px-1 text-lg">Pilih Menu Kas</h3>
 
       {/* Grid Kotak-Kotak (Gaya Shopee) */}
