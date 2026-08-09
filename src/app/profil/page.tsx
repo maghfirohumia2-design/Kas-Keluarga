@@ -16,8 +16,8 @@ export default function ProfilPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user && user.email) {
-        // Tampilkan hanya nomor HP, buang bagian @kaskeluarga.com
-        const phoneOnly = user.email.replace("@kaskeluarga.com", "");
+        // Tampilkan hanya nomor HP, buang bagian hp_ dan @kaskeluarga.com
+        const phoneOnly = user.email.replace("hp_", "").replace("@kaskeluarga.com", "");
         setPhone(phoneOnly);
       } else {
         setPhone("Tidak ada nomor");

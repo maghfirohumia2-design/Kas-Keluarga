@@ -17,7 +17,8 @@ export default function LoginPage() {
     setMessage(null);
 
     // Trik: Mengubah Nomor HP menjadi format email fiktif agar bisa menggunakan fitur bawaan Supabase
-    const dummyEmail = `${phone}@kaskeluarga.com`;
+    // Ditambahkan prefix "hp_" agar tidak dianggap invalid oleh sistem validasi email Supabase
+    const dummyEmail = `hp_${phone}@kaskeluarga.com`;
 
     try {
       if (isLogin) {
