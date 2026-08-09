@@ -23,19 +23,60 @@ export default async function Home() {
   if (accounts) {
     accounts.forEach(acc => { balances[acc.id] = 0; });
   }
+import Image from "next/image";
 
-  if (transactions) {
-    transactions.forEach(tx => {
-      const amount = Number(tx.amount);
-      if (tx.type === 'income') {
-        balances[tx.account_id] += amount;
-        totalBalance += amount;
+export default function Home() {
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [balances, setBalances] = useState<Record<string, number>>({});
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [accountsError, setAccountsError] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data: accountsData, error: accountsError } = await supabase
+        .from('accounts')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('account_id, type, amount');
+
+      if (accountsError) {
+        setAccountsError(true);
       } else {
-        balances[tx.account_id] -= amount;
-        totalBalance -= amount;
+        setAccounts(accountsData || []);
+        
+        const newBalances: Record<string, number> = {};
+        let newTotal = 0;
+        
+        accountsData?.forEach(acc => { newBalances[acc.id] = 0; });
+        
+        transactions?.forEach(tx => {
+          const amount = Number(tx.amount);
+          if (tx.type === 'income') {
+            newBalances[tx.account_id] += amount;
+            newTotal += amount;
+          } else {
+            newBalances[tx.account_id] -= amount;
+            newTotal -= amount;
+          }
+        });
+        
+        setBalances(newBalances);
+        setTotalBalance(newTotal);
+      }
+    }
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.user_metadata?.avatar_url) {
+        setAvatarUrl(user.user_metadata.avatar_url);
       }
     });
-  }
+
+    fetchData();
+  }, []);
 
   return (
     <main className="p-6">
@@ -44,9 +85,13 @@ export default async function Home() {
           <h1 className="text-2xl font-bold text-slate-800">My Family</h1>
           <p className="text-sm text-slate-500">Selalu Sehat dan Bahagia</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-xl shadow-inner border border-slate-200">
-          👨‍👩‍👧
-        </div>
+        <Link href="/profil" className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-xl shadow-inner border border-slate-200 overflow-hidden relative">
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="Profil" fill className="object-cover" />
+          ) : (
+            "👨‍👩‍👧"
+          )}
+        </Link>
       </header>
 
       {/* Saldo Total Keseluruhan */}
