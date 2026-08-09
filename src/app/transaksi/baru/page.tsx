@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Upload, Loader2, Lock } from "lucide-react";
 import Link from "next/link";
 
-export default function BaruTransaksi() {
+function TransactionFormContent() {
   const router = useRouter();
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const searchParams = useSearchParams();
+  const prefillAccountId = searchParams.get("accountId");
+  const prefillType = searchParams.get("type");
+
+  const [type, setType] = useState<"income" | "expense">((prefillType as "income" | "expense") || "expense");
   const [accounts, setAccounts] = useState<any[]>([]);
-  const [accountId, setAccountId] = useState("");
+  const [accountId, setAccountId] = useState(prefillAccountId || "");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -21,11 +25,11 @@ export default function BaruTransaksi() {
       const { data } = await supabase.from("accounts").select("*").order("name");
       if (data) {
         setAccounts(data);
-        if (data.length > 0) setAccountId(data[0].id);
+        if (!prefillAccountId && data.length > 0) setAccountId(data[0].id);
       }
     }
     fetchAccounts();
-  }, []);
+  }, [prefillAccountId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,19 +132,31 @@ export default function BaruTransaksi() {
           </div>
 
           {/* Akun/Kas */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Pilih Kas</label>
-            <select
-              required
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 transition-all font-medium appearance-none"
-            >
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.name}</option>
-              ))}
-            </select>
-          </div>
+          {prefillAccountId ? (
+            <div className="bg-slate-100 p-4 rounded-xl flex items-center gap-3 border border-slate-200">
+              <Lock size={16} className="text-slate-400" />
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kas Terkunci</p>
+                <p className="text-sm font-semibold text-slate-700">
+                  {accounts.find(a => a.id === accountId)?.name || "Memuat..."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Pilih Kas</label>
+              <select
+                required
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 transition-all font-medium appearance-none"
+              >
+                {accounts.map((acc) => (
+                  <option key={acc.id} value={acc.id}>{acc.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Keterangan */}
           <div>
@@ -196,5 +212,13 @@ export default function BaruTransaksi() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function BaruTransaksi() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Memuat...</div>}>
+      <TransactionFormContent />
+    </Suspense>
   );
 }
