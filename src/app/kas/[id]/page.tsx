@@ -42,6 +42,7 @@ export default function KasDashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
+  const [filterMonth, setFilterMonth] = useState("");
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -122,8 +123,13 @@ export default function KasDashboardPage() {
     setIsSavingBudget(false);
   };
 
+  // Filter transaksi
+  const filteredTxList = filterMonth 
+    ? transactions.filter(tx => tx.created_at.startsWith(filterMonth))
+    : transactions;
+
   // Kelompokkan transaksi berdasarkan tanggal
-  const groupedTransactions = transactions.reduce((groups: any, tx: any) => {
+  const groupedTransactions = filteredTxList.reduce((groups: any, tx: any) => {
     const dateStr = new Date(tx.created_at).toLocaleDateString('id-ID', {
       day: 'numeric', month: 'long', year: 'numeric'
     });
@@ -223,33 +229,36 @@ export default function KasDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
             <History size={18} className="text-emerald-500" />
-            Riwayat {account.name}
+            Riwayat
           </h3>
-          <span className="text-xs font-medium text-slate-400 bg-slate-200/50 px-2 py-1 rounded-md">
-            {transactions.length} Catatan
-          </span>
+          <input 
+            type="month" 
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className="text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm"
+          />
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {Object.keys(groupedTransactions).map((date) => (
             <div key={date}>
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-2">
+              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
                 {date}
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {groupedTransactions[date].map((tx: any) => (
                   <div 
                     key={tx.id} 
                     onClick={() => setSelectedTx(tx)}
-                    className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer"
+                    className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer"
                   >
-                    <div className="flex gap-3">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner border ${
+                    <div className="flex gap-2.5">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-inner border ${
                         tx.type === 'income' 
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors' 
                           : 'bg-red-50 text-red-500 border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors'
                       }`}>
-                        {tx.type === 'income' ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
+                        {tx.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
                       </div>
                       <div>
                         <p className="font-bold text-slate-800 text-sm line-clamp-1">{tx.description}</p>
@@ -284,11 +293,11 @@ export default function KasDashboardPage() {
             </div>
           ))}
 
-          {transactions.length === 0 && (
+          {filteredTxList.length === 0 && (
             <div className="p-8 text-center text-slate-500 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm mt-4">
               <History size={32} className="mx-auto text-slate-300 mb-3" />
               <p className="font-medium text-slate-600 text-sm">Belum ada transaksi</p>
-              <p className="text-xs mt-1">Catat pemasukan atau pengeluaran pertama Anda.</p>
+              <p className="text-xs mt-1">Tidak ada catatan pada periode ini.</p>
             </div>
           )}
         </div>
