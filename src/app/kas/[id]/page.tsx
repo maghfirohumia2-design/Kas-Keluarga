@@ -214,25 +214,25 @@ export default function KasDashboardPage() {
             </div>
           )}
           
-          <div className="flex gap-4 w-full">
+          <div className="flex justify-between w-full mt-2">
             <Link 
               href={`/transaksi/baru?accountId=${accountId}&type=income`}
-              className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-2xl py-3 flex flex-col items-center justify-center gap-1 shadow-sm"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-sm"
             >
-              <div className="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-sm">
-                <TrendingUp size={16} />
+              <div className="w-6 h-6 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-sm shrink-0">
+                <TrendingUp size={14} />
               </div>
-              <span className="text-xs font-bold text-white mt-1">Uang Masuk</span>
+              <span className="text-xs font-bold text-white">Uang Masuk</span>
             </Link>
             
             <Link 
               href={`/transaksi/baru?accountId=${accountId}&type=expense`}
-              className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-2xl py-3 flex flex-col items-center justify-center gap-1 shadow-sm"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-sm"
             >
-              <div className="w-8 h-8 rounded-full bg-white text-red-500 flex items-center justify-center shadow-sm">
-                <TrendingDown size={16} />
+              <div className="w-6 h-6 rounded-full bg-white text-red-500 flex items-center justify-center shadow-sm shrink-0">
+                <TrendingDown size={14} />
               </div>
-              <span className="text-xs font-bold text-white mt-1">Uang Keluar</span>
+              <span className="text-xs font-bold text-white">Uang Keluar</span>
             </Link>
           </div>
         </div>
