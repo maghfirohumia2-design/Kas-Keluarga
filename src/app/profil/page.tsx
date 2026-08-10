@@ -489,10 +489,10 @@ export default function ProfilPage() {
           </p>
         )}
 
-        <div className="w-full flex gap-3 mt-4 pt-6 border-t border-slate-100">
+        <div className="w-full flex justify-between mt-4 pt-6 border-t border-slate-100">
           <button 
             onClick={() => setShowDeleteModal(true)}
-            className="flex-1 py-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-red-100 hover:border-red-500 shadow-sm"
+            className="px-5 py-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white font-bold rounded-xl transition-all flex items-center gap-2 border border-red-100 hover:border-red-500 shadow-sm"
           >
             <Trash2 size={16} />
             <span className="text-xs">Hapus Kas</span>
@@ -500,7 +500,7 @@ export default function ProfilPage() {
           
           <button 
             onClick={() => setShowAddKas(true)}
-            className="flex-1 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
+            className="px-5 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-sm shadow-emerald-200"
           >
             <Plus size={16} />
             <span className="text-xs">Tambah Kas</span>
