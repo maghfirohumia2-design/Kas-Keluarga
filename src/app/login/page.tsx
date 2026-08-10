@@ -144,9 +144,14 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-[100dvh] flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-900">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 pointer-events-none mix-blend-overlay" />
+    <main className="min-h-[100dvh] flex flex-col justify-between relative overflow-hidden bg-emerald-950">
+      {/* Glowing Orbs for Mesh Gradient */}
+      <div className="absolute top-[-5%] left-[-10%] w-[350px] h-[350px] bg-teal-400 rounded-full mix-blend-screen filter blur-[120px] opacity-50 pointer-events-none" />
+      <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-emerald-500 rounded-full mix-blend-screen filter blur-[130px] opacity-40 pointer-events-none" />
+      <div className="absolute bottom-[20%] left-[20%] w-[300px] h-[300px] bg-cyan-400 rounded-full mix-blend-screen filter blur-[100px] opacity-30 pointer-events-none" />
+      
+      {/* Texture Layer */}
+      <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none mix-blend-overlay" />
 
       {/* Top Carousel Area */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
