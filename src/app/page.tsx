@@ -68,6 +68,7 @@ const getIconForAccount = (name: string) => {
 export default function Home() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
+  const [monthlyExpenses, setMonthlyExpenses] = useState<Record<string, number>>({});
   const [totalBalance, setTotalBalance] = useState(0);
   const [accountsError, setAccountsError] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -90,7 +91,7 @@ export default function Home() {
 
     const { data: transactions } = await supabase
       .from('transactions')
-      .select('account_id, type, amount');
+      .select('account_id, type, amount, created_at');
 
     if (accountsError) {
       setAccountsError(true);
@@ -98,9 +99,16 @@ export default function Home() {
       setAccounts(accountsData || []);
       
       const newBalances: Record<string, number> = {};
+      const newMonthlyExpenses: Record<string, number> = {};
       let newTotal = 0;
       
-      accountsData?.forEach(acc => { newBalances[acc.id] = 0; });
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      
+      accountsData?.forEach(acc => { 
+        newBalances[acc.id] = 0; 
+        newMonthlyExpenses[acc.id] = 0;
+      });
       
       transactions?.forEach(tx => {
         const amount = Number(tx.amount);
@@ -110,10 +118,16 @@ export default function Home() {
         } else {
           newBalances[tx.account_id] -= amount;
           newTotal -= amount;
+          
+          const txDate = new Date(tx.created_at);
+          if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+            newMonthlyExpenses[tx.account_id] += amount;
+          }
         }
       });
       
       setBalances(newBalances);
+      setMonthlyExpenses(newMonthlyExpenses);
       setTotalBalance(newTotal);
     }
     setLoading(false);
@@ -210,6 +224,24 @@ export default function Home() {
                   <span className="text-[10px] sm:text-xs font-bold text-slate-700 text-center uppercase tracking-wide px-1 line-clamp-2 leading-tight mt-1">
                     {account.name}
                   </span>
+                  
+                  {/* Budget Progress (if exists) */}
+                  {account.budget_limit > 0 && (
+                    <div className="w-14 sm:w-16 mt-2 flex flex-col items-center">
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            (monthlyExpenses[account.id] / account.budget_limit) > 0.85 
+                              ? 'bg-red-500' 
+                              : (monthlyExpenses[account.id] / account.budget_limit) > 0.6 
+                                ? 'bg-orange-400' 
+                                : 'bg-emerald-400'
+                          }`}
+                          style={{ width: `${Math.min((monthlyExpenses[account.id] / account.budget_limit) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </Link>
               ))}
               

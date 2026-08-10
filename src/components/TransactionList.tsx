@@ -1,14 +1,16 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Receipt, Trash2, Edit2 } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Receipt, Trash2, Edit2, Search, Download, Filter } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function TransactionList({ initialTransactions }: { initialTransactions: any[] }) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
@@ -30,17 +32,117 @@ export default function TransactionList({ initialTransactions }: { initialTransa
     }
   };
 
-  if (!transactions || transactions.length === 0) {
-    return (
-      <div className="p-6 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-sm">
-        Belum ada transaksi.
-      </div>
-    );
-  }
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      // Filter by search query
+      const matchesSearch = tx.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            (tx.accounts?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Filter by month (format YYYY-MM)
+      let matchesMonth = true;
+      if (filterMonth) {
+        const txDate = new Date(tx.created_at);
+        const txMonthStr = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+        matchesMonth = txMonthStr === filterMonth;
+      }
+      
+      return matchesSearch && matchesMonth;
+    });
+  }, [transactions, searchQuery, filterMonth]);
+
+  const handleExportCSV = () => {
+    if (filteredTransactions.length === 0) {
+      alert("Tidak ada data untuk diekspor.");
+      return;
+    }
+    
+    // Header CSV
+    let csvContent = "Tanggal,ID Transaksi,Sumber Kas,Keterangan,Tipe,Nominal,Kasir\n";
+    
+    filteredTransactions.forEach((tx) => {
+      const date = new Date(tx.created_at).toLocaleString("id-ID");
+      const id = tx.id;
+      const kas = tx.accounts?.name || "-";
+      const desc = `"${tx.description.replace(/"/g, '""')}"`; // Escape quotes
+      const type = tx.type === "income" ? "Pemasukan" : "Pengeluaran";
+      const amount = tx.amount;
+      const user = tx.user_name || "Admin";
+      
+      csvContent += `${date},${id},${kas},${desc},${type},${amount},${user}\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Laporan_Transaksi_${filterMonth || 'Semua'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Generate unique months for filter dropdown
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    transactions.forEach(tx => {
+      const txDate = new Date(tx.created_at);
+      const monthStr = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+      months.add(monthStr);
+    });
+    return Array.from(months).sort().reverse(); // Terbaru di atas
+  }, [transactions]);
+
+  const formatMonthLabel = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  };
 
   return (
-    <>
-      {transactions.map((tx) => (
+    <div className="space-y-4">
+      {/* Action Bar: Search, Filter, Export */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <div className="relative">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Cari transaksi..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
+          />
+        </div>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
+            >
+              <option value="">Semua Bulan</option>
+              {availableMonths.map(m => (
+                <option key={m} value={m}>{formatMonthLabel(m)}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-700 transition-colors"
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      {filteredTransactions.length === 0 ? (
+        <div className="p-8 text-center text-slate-500 bg-white rounded-2xl border border-dashed border-slate-200 text-sm">
+          Tidak ada transaksi yang cocok.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredTransactions.map((tx) => (
         <div key={tx.id} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 group relative overflow-hidden">
           {/* Main Transaction Info */}
           <div className="flex items-center justify-between">
@@ -93,6 +195,8 @@ export default function TransactionList({ initialTransactions }: { initialTransa
           </div>
         </div>
       ))}
-    </>
+        </div>
+      )}
+    </div>
   );
 }

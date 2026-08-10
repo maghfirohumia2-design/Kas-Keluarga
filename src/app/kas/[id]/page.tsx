@@ -37,6 +37,12 @@ export default function KasDashboardPage() {
   const [error, setError] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Budgeting state
+  const [monthlyExpense, setMonthlyExpense] = useState(0);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [budgetInput, setBudgetInput] = useState("");
+  const [isSavingBudget, setIsSavingBudget] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -67,13 +73,27 @@ export default function KasDashboardPage() {
       if (!txError && txData) {
         setTransactions(txData);
         
-        // Calculate balance
+        // Calculate balance & monthly expense
         let currentBalance = 0;
+        let currentMonthlyExpense = 0;
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+
         txData.forEach(tx => {
-          if (tx.type === 'income') currentBalance += Number(tx.amount);
-          else currentBalance -= Number(tx.amount);
+          const amount = Number(tx.amount);
+          if (tx.type === 'income') {
+            currentBalance += amount;
+          } else {
+            currentBalance -= amount;
+            const txDate = new Date(tx.created_at);
+            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+              currentMonthlyExpense += amount;
+            }
+          }
         });
         setBalance(currentBalance);
+        setMonthlyExpense(currentMonthlyExpense);
+        setBudgetInput(accData.budget_limit ? accData.budget_limit.toLocaleString('id-ID') : "");
       }
       
       setLoading(false);
@@ -81,6 +101,21 @@ export default function KasDashboardPage() {
 
     fetchData();
   }, [accountId]);
+
+  const handleSaveBudget = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingBudget(true);
+    const newLimit = parseFloat(budgetInput.replace(/\D/g, "")) || 0;
+    
+    const { error } = await supabase.from('accounts').update({ budget_limit: newLimit }).eq('id', accountId);
+    if (!error) {
+      setAccount({ ...account, budget_limit: newLimit });
+      setShowBudgetModal(false);
+    } else {
+      alert("Gagal menyimpan target budget");
+    }
+    setIsSavingBudget(false);
+  };
 
   // Kelompokkan transaksi berdasarkan tanggal
   const groupedTransactions = transactions.reduce((groups: any, tx: any) => {
@@ -132,8 +167,10 @@ export default function KasDashboardPage() {
         <button onClick={() => router.push('/')} className="w-10 h-10 bg-white border border-slate-200 hover:bg-slate-100 shadow-sm rounded-full flex items-center justify-center transition-colors">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-bold text-lg">{account.name}</h1>
-        <div className="w-10 h-10"></div> {/* Placeholder for balance alignment */}
+        <h1 className="font-bold text-lg text-center flex-1">{account.name}</h1>
+        <button onClick={() => setShowBudgetModal(true)} className="text-[10px] sm:text-xs font-bold text-slate-600 bg-white shadow-sm px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+          Target
+        </button>
       </nav>
 
       {/* Saldo Card */}
@@ -146,6 +183,24 @@ export default function KasDashboardPage() {
           <h2 className="text-4xl font-black tracking-tight mb-6">
             Rp {balance.toLocaleString('id-ID')}
           </h2>
+
+          {/* Budget Progress (if exists) */}
+          {account.budget_limit > 0 && (
+            <div className="w-full bg-white/10 rounded-2xl p-4 mt-2 mb-6">
+              <div className="flex justify-between text-xs font-medium text-white/90 mb-2">
+                <span>Pengeluaran Bulan Ini</span>
+                <span>Rp {monthlyExpense.toLocaleString('id-ID')} / Rp {Number(account.budget_limit).toLocaleString('id-ID')}</span>
+              </div>
+              <div className="w-full h-2 bg-black/20 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${
+                    (monthlyExpense / account.budget_limit) > 0.85 ? 'bg-red-400' : (monthlyExpense / account.budget_limit) > 0.6 ? 'bg-orange-400' : 'bg-emerald-300'
+                  }`}
+                  style={{ width: `${Math.min((monthlyExpense / account.budget_limit) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
           
           <div className="flex gap-4 w-full">
             <Link 
@@ -296,6 +351,47 @@ export default function KasDashboardPage() {
                 Batal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Atur Budget */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-2">Target Pengeluaran</h2>
+            <p className="text-sm text-slate-500 mb-6">Tentukan batas maksimal pengeluaran bulanan untuk kas ini. (Isi 0 jika tidak ada target)</p>
+            <form onSubmit={handleSaveBudget} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Batas Pengeluaran (Rp)</label>
+                <input
+                  type="text"
+                  value={budgetInput}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setBudgetInput(val ? Number(val).toLocaleString('id-ID') : "");
+                  }}
+                  placeholder="Misal: 5.000.000"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-bold text-slate-800"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBudgetModal(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingBudget}
+                  className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50"
+                >
+                  {isSavingBudget ? "Menyimpan..." : "Simpan"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
