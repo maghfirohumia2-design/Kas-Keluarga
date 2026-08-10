@@ -182,15 +182,8 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-8 text-center text-sm font-medium text-slate-500">
-              {isLogin ? "Belum punya akun?" : "Sudah punya akun?"}{" "}
-              <button 
-                type="button" 
-                onClick={() => { setIsLogin(!isLogin); setMessage(null); }}
-                className="text-emerald-600 hover:underline font-bold"
-              >
-                {isLogin ? "Daftar di sini" : "Masuk di sini"}
-              </button>
+            <div className="mt-8 text-center text-xs font-medium text-slate-400">
+              Hubungi Admin untuk mendaftarkan akun baru.
             </div>
           </div>
 
