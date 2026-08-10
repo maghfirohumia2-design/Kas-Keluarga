@@ -5,7 +5,7 @@ import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { createUserAction } from "@/app/actions/admin";
+import { createUserAction, getUsersAction, deleteUserAction, updateUserAction } from "@/app/actions/admin";
 
 export default function ProfilPage() {
   const [phone, setPhone] = useState<string | null>("Memuat...");
@@ -44,6 +44,16 @@ export default function ProfilPage() {
   const [newPin, setNewPin] = useState("");
   const [addUserLoading, setAddUserLoading] = useState(false);
   const [addUserMessage, setAddUserMessage] = useState<{text: string, type: "success" | "error"} | null>(null);
+
+  // State Admin: Lihat Anggota
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  
+  const [editMemberId, setEditMemberId] = useState<string | null>(null);
+  const [editMemberName, setEditMemberName] = useState("");
+  const [editMemberPhone, setEditMemberPhone] = useState("");
+  const [editMemberPin, setEditMemberPin] = useState("");
 
   const router = useRouter();
 
@@ -272,6 +282,44 @@ export default function ProfilPage() {
     }
   };
 
+  const handleOpenMembers = async () => {
+    setShowMembersModal(true);
+    setLoadingMembers(true);
+    const res = await getUsersAction();
+    if (res.success) {
+      setMembers(res.users);
+    } else {
+      alert(res.error || "Gagal memuat daftar anggota");
+    }
+    setLoadingMembers(false);
+  };
+
+  const handleDeleteMember = async (userId: string, memberName: string) => {
+    if (confirm(`Yakin ingin menghapus anggota "${memberName}" dari sistem?\n(Transaksi yang pernah dibuat akan tetap aman)`)) {
+      setLoadingMembers(true);
+      const res = await deleteUserAction(userId);
+      if (res.error) alert(res.error);
+      else {
+        const refresh = await getUsersAction();
+        if (refresh.success) setMembers(refresh.users);
+      }
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleSaveEditMember = async (userId: string) => {
+    setLoadingMembers(true);
+    const res = await updateUserAction(userId, editMemberPhone, editMemberName, editMemberPin);
+    if (res.error) {
+      alert(res.error);
+    } else {
+      setEditMemberId(null);
+      const refresh = await getUsersAction();
+      if (refresh.success) setMembers(refresh.users);
+    }
+    setLoadingMembers(false);
+  };
+
   const fetchAccountsList = async () => {
     const { data } = await supabase.from('accounts').select('*').order('created_at', { ascending: true });
     if (data) setAccounts(data);
@@ -363,18 +411,18 @@ export default function ProfilPage() {
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col items-center mb-8 relative overflow-hidden">
         <div className="absolute top-0 w-full h-24 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-3xl flex justify-between items-start p-4">
           <button 
-            onClick={() => setShowDeleteModal(true)}
+            onClick={handleOpenMembers}
             className="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm"
           >
-            <Trash2 size={16} />
-            Hapus
+            <Users size={16} />
+            Lihat Anggota
           </button>
           <button 
-            onClick={() => setShowAddKas(true)}
+            onClick={() => setShowAddUser(true)}
             className="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm"
           >
             <Plus size={16} />
-            Tambah
+            Tambah Anggota
           </button>
         </div>
         
@@ -436,32 +484,28 @@ export default function ProfilPage() {
         )}
         
         {!isEditingProfile && (
-          <p className="text-sm font-medium text-slate-500 mb-6 bg-slate-50 px-4 py-1 rounded-full border border-slate-100">
+          <p className="text-sm font-medium text-slate-500 mb-2 bg-slate-50 px-4 py-1 rounded-full border border-slate-100">
             {phone}
           </p>
         )}
 
-
-      </div>
-
-      {/* Admin Section */}
-      <h3 className="font-semibold text-slate-800 mb-4 ml-2 flex items-center gap-2">
-        Admin Panel
-        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-full">Pro</span>
-      </h3>
-      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden">
-        <button 
-          onClick={() => setShowAddUser(true)}
-          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
-        >
-          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Users size={20} />
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 text-sm">Tambah Anggota</p>
-            <p className="text-xs text-slate-500">Buat akun untuk staf atau keluarga</p>
-          </div>
-        </button>
+        <div className="w-full flex gap-2 mt-4 pt-6 border-t border-slate-100">
+          <button 
+            onClick={() => setShowDeleteModal(true)}
+            className="flex-1 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors flex flex-col items-center justify-center gap-1.5 border border-red-100"
+          >
+            <Trash2 size={18} />
+            <span className="text-[10px] uppercase tracking-wider">Hapus Kas</span>
+          </button>
+          
+          <button 
+            onClick={() => setShowAddKas(true)}
+            className="flex-1 py-3 bg-emerald-50 text-emerald-600 font-bold rounded-xl hover:bg-emerald-100 transition-colors flex flex-col items-center justify-center gap-1.5 border border-emerald-100"
+          >
+            <Plus size={18} />
+            <span className="text-[10px] uppercase tracking-wider">Tambah Kas</span>
+          </button>
+        </div>
       </div>
 
       <h3 className="font-semibold text-slate-800 mb-4 ml-2">Lainnya</h3>
@@ -739,6 +783,114 @@ export default function ProfilPage() {
                 <span className="text-xs font-semibold">Memverifikasi...</span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Manajemen Anggota */}
+      {showMembersModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-3xl p-6 shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Users size={24} className="text-blue-500" />
+                  Daftar Anggota
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Kelola data anggota yang terdaftar</p>
+              </div>
+              <button 
+                onClick={() => setShowMembersModal(false)}
+                className="w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 mb-4 custom-scrollbar">
+              {loadingMembers && members.length === 0 ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="animate-spin text-blue-500" size={24} />
+                </div>
+              ) : (
+                members.map((m) => (
+                  <div key={m.id} className="bg-slate-50 border border-slate-100 p-4 rounded-2xl transition-all">
+                    {editMemberId === m.id ? (
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={editMemberName}
+                          onChange={(e) => setEditMemberName(e.target.value)}
+                          placeholder="Nama Lengkap"
+                          className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="tel"
+                            value={editMemberPhone}
+                            onChange={(e) => setEditMemberPhone(e.target.value.replace(/\D/g, ""))}
+                            placeholder="Nomor HP"
+                            className="w-1/2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                          />
+                          <input
+                            type="text"
+                            maxLength={6}
+                            value={editMemberPin}
+                            onChange={(e) => setEditMemberPin(e.target.value.replace(/\D/g, ""))}
+                            placeholder="PIN Baru (opsional)"
+                            className="w-1/2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button onClick={() => setEditMemberId(null)} className="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-200 rounded-lg hover:bg-slate-300">Batal</button>
+                          <button onClick={() => handleSaveEditMember(m.id)} disabled={loadingMembers} className="px-4 py-2 text-xs font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 flex items-center gap-1">
+                            {loadingMembers ? <Loader2 size={12} className="animate-spin" /> : "Simpan"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 shrink-0">
+                            <UserCircle size={20} />
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="font-bold text-slate-800 text-sm truncate">{m.fullName}</p>
+                            <p className="text-xs text-slate-500 truncate">{m.phone}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button 
+                            onClick={() => {
+                              setEditMemberId(m.id);
+                              setEditMemberName(m.fullName);
+                              setEditMemberPhone(m.phone);
+                              setEditMemberPin(""); // kosongkan pin, tidak diedit unless diisi
+                            }}
+                            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-blue-500 flex items-center justify-center hover:bg-blue-50 transition-colors shadow-sm"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteMember(m.id, m.fullName)}
+                            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-red-500 flex items-center justify-center hover:bg-red-50 transition-colors shadow-sm"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <button
+              onClick={() => setShowMembersModal(false)}
+              className="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors mt-auto"
+            >
+              Tutup
+            </button>
           </div>
         </div>
       )}

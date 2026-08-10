@@ -52,3 +52,76 @@ export async function createUserAction(phone: string, pin: string, fullName: str
     return { error: err.message || "Terjadi kesalahan sistem." };
   }
 }
+
+export async function getUsersAction() {
+  try {
+    if (!supabaseServiceKey) return { error: "SUPABASE_SERVICE_ROLE_KEY tidak ditemukan." };
+    
+    // Auth admin returns users sorted by default
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (error) return { error: error.message };
+    
+    // Format the response nicely
+    const users = data.users.map(u => {
+      const phoneOnly = u.email ? u.email.replace("hp_", "").replace("@kaskeluarga.com", "") : "";
+      return {
+        id: u.id,
+        phone: phoneOnly,
+        fullName: u.user_metadata?.full_name || "Tanpa Nama",
+        createdAt: u.created_at
+      }
+    });
+
+    return { success: true, users: users };
+  } catch (err: any) {
+    console.error("Get users exception:", err);
+    return { error: err.message || "Terjadi kesalahan sistem saat mengambil data." };
+  }
+}
+
+export async function deleteUserAction(userId: string) {
+  try {
+    if (!supabaseServiceKey) return { error: "Service Role Key tidak ditemukan." };
+    
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (error) return { error: error.message };
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error("Delete user exception:", err);
+    return { error: err.message || "Gagal menghapus user." };
+  }
+}
+
+export async function updateUserAction(userId: string, phone: string, fullName: string, pin?: string) {
+  try {
+    if (!supabaseServiceKey) return { error: "Service Role Key tidak ditemukan." };
+    if (!phone || phone.length < 10) return { error: "Nomor HP tidak valid." };
+    if (!fullName) return { error: "Nama pengguna harus diisi." };
+    
+    const updatePayload: any = {
+      email: `hp_${phone}@kaskeluarga.com`,
+      user_metadata: { full_name: fullName }
+    };
+    
+    if (pin && pin.length === 6) {
+      updatePayload.password = pin;
+    }
+    
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, updatePayload);
+    
+    if (error) {
+      if (error.message.includes("already registered")) {
+        return { error: "Nomor HP ini sudah digunakan anggota lain." };
+      }
+      return { error: error.message };
+    }
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error("Update user exception:", err);
+    return { error: err.message || "Gagal memperbarui user." };
+  }
+}
+
