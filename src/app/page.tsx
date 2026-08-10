@@ -50,19 +50,19 @@ const getColorClassesForAccount = (name: string) => {
   return "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-700 border-slate-200/50";
 };
 
-// Fungsi ikon per kas
+// Fungsi ikon per kas (Gambar 3D)
 const getIconForAccount = (name: string) => {
-  if (!name) return <Coins size={32} />;
+  if (!name) return "/icons/umum.jpg";
   const lowerName = name.toLowerCase();
   
-  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return <HomeIcon size={32} />;
-  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return <Monitor size={32} />;
-  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) return <ClipboardList size={32} />;
-  if (lowerName.includes("kantor") || lowerName.includes("kerja")) return <Briefcase size={32} />;
-  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return <GraduationCap size={32} />;
-  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return <Car size={32} />;
-  if (lowerName.includes("belanja") || lowerName.includes("toko")) return <ShoppingBag size={32} />;
-  return <Coins size={32} />;
+  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return "/icons/rumah.jpg";
+  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return "/icons/it.jpg";
+  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv") || lowerName.includes("laporan")) return "/icons/spv.jpg";
+  if (lowerName.includes("kantor") || lowerName.includes("kerja")) return "/icons/kantor.jpg";
+  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return "/icons/pendidikan.jpg";
+  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return "/icons/mobil.jpg";
+  if (lowerName.includes("belanja") || lowerName.includes("toko")) return "/icons/belanja.jpg";
+  return "/icons/umum.jpg";
 };
 
 export default function Home() {
@@ -216,8 +216,10 @@ export default function Home() {
                   className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
                 >
                   {/* Icon Box */}
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-2 transition-colors border shadow-inner ${getColorClassesForAccount(account.name)}`}>
-                    {getIconForAccount(account.name)}
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] flex items-center justify-center mb-2 shadow-sm bg-white p-1 border border-slate-100/80 group-hover:shadow-md group-hover:border-slate-200 transition-all">
+                    <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-inner">
+                      <Image src={getIconForAccount(account.name)} alt={account.name} fill className="object-cover" sizes="64px" />
+                    </div>
                   </div>
                   
                   {/* Text / Title */}
