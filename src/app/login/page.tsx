@@ -118,18 +118,17 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: fullPin });
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          // Auto-register untuk testing
-          const { error: signUpError } = await supabase.auth.signUp({ email: dummyEmail, password: fullPin });
-          if (signUpError) throw signUpError;
+          setMessage({ text: "❌ Nomor atau PIN salah. Hubungi Admin untuk mendaftarkan akun.", type: "error" });
         } else {
           throw error;
         }
+        setPin(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
       }
     } catch (error: any) {
       setPin(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
-
-      setMessage({ text: "PIN salah. Coba lagi.", type: "error" });
+      setMessage({ text: error.message || "Terjadi kesalahan.", type: "error" });
     } finally {
       setLoading(false);
     }
