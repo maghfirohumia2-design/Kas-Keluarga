@@ -424,41 +424,26 @@ export default function ProfilPage() {
         Manajemen Kas
       </h3>
       <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 mb-8 overflow-hidden">
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2">
           <button 
             onClick={() => setShowAddKas(true)}
-            className="flex-1 py-3 bg-emerald-50 text-emerald-600 font-bold rounded-2xl hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 border border-emerald-100"
+            className="flex-1 py-4 bg-emerald-50 text-emerald-600 font-bold rounded-2xl hover:bg-emerald-100 transition-colors flex flex-col items-center justify-center gap-2 border border-emerald-100"
           >
-            <Plus size={18} />
+            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+              <Plus size={20} />
+            </div>
             Tambah Kas
           </button>
           
           <button 
             onClick={() => setShowDeleteModal(true)}
-            className="flex-1 py-3 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2 border border-red-100"
+            className="flex-1 py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors flex flex-col items-center justify-center gap-2 border border-red-100"
           >
-            <Trash2 size={18} />
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <Trash2 size={20} />
+            </div>
             Hapus Kas
           </button>
-        </div>
-        
-        <div className="space-y-2">
-          {accounts.map(acc => (
-            <div key={acc.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center border border-slate-200">
-                  <Wallet size={20} className="text-slate-400" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700 text-sm">{acc.name}</p>
-                  {acc.description && <p className="text-[10px] text-slate-500 line-clamp-1">{acc.description}</p>}
-                </div>
-              </div>
-            </div>
-          ))}
-          {accounts.length === 0 && (
-            <p className="text-center text-xs text-slate-500 py-4">Belum ada Kas. Silakan tambah baru.</p>
-          )}
         </div>
       </div>
 
