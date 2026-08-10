@@ -41,7 +41,6 @@ export default function KasDashboardPage() {
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
-  const [showBalance, setShowBalance] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [filterDate, setFilterDate] = useState("");
   
