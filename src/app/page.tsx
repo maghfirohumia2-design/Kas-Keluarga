@@ -10,6 +10,8 @@ import {
   Car,
   ShoppingBag,
   CircleDollarSign,
+  Monitor,
+  ClipboardList,
   ArrowRight
 } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +21,9 @@ import Image from "next/image";
 const getIconForAccount = (name: string) => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return <HomeIcon size={32} />;
-  if (lowerName.includes("kantor") || lowerName.includes("psv") || lowerName.includes("kerja")) return <Briefcase size={32} />;
+  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return <Monitor size={32} />;
+  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) return <ClipboardList size={32} />;
+  if (lowerName.includes("kantor") || lowerName.includes("kerja")) return <Briefcase size={32} />;
   if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah")) return <GraduationCap size={32} />;
   if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return <Car size={32} />;
   if (lowerName.includes("belanja") || lowerName.includes("toko")) return <ShoppingBag size={32} />;
