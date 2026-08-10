@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2, Users } from "lucide-react";
+import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2, Users, Plus, Wallet, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -11,6 +11,13 @@ export default function ProfilPage() {
   const [phone, setPhone] = useState<string | null>("Memuat...");
   const [fullName, setFullName] = useState<string>("My Profile");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  
+  // State untuk modal tambah Kas
+  const [showAddKas, setShowAddKas] = useState(false);
+  const [newKasName, setNewKasName] = useState("");
+  const [newKasDesc, setNewKasDesc] = useState("");
+  const [isSubmittingKas, setIsSubmittingKas] = useState(false);
   
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -37,6 +44,12 @@ export default function ProfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const fetchAccounts = async () => {
+      const { data } = await supabase.from('accounts').select('*').order('created_at', { ascending: true });
+      if (data) setAccounts(data);
+    };
+    fetchAccounts();
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         if (user.email) {
@@ -252,6 +265,44 @@ export default function ProfilPage() {
     }
   };
 
+  const fetchAccountsList = async () => {
+    const { data } = await supabase.from('accounts').select('*').order('created_at', { ascending: true });
+    if (data) setAccounts(data);
+  };
+
+  const handleAddKas = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKasName.trim()) return;
+    
+    setIsSubmittingKas(true);
+    const { error } = await supabase.from('accounts').insert({
+      name: newKasName,
+      description: newKasDesc
+    });
+
+    if (error) {
+      alert("Gagal menambahkan Kas. Coba lagi.");
+    } else {
+      setNewKasName("");
+      setNewKasDesc("");
+      setShowAddKas(false);
+      fetchAccountsList();
+    }
+    setIsSubmittingKas(false);
+  };
+
+  const handleDeleteKas = async (id: string, name: string) => {
+    if (confirm(`🚨 PERINGATAN 🚨\nMenghapus Kas "${name}" akan menghapus SEMUA riwayat transaksi di dalamnya secara PERMANEN!\n\nApakah Anda benar-benar yakin ingin menghapus Kas ini?`)) {
+      await supabase.from('transactions').delete().eq('account_id', id);
+      const { error } = await supabase.from('accounts').delete().eq('id', id);
+      if (error) {
+        alert("Gagal menghapus Kas: " + error.message);
+      } else {
+        fetchAccountsList();
+      }
+    }
+  };
+
   return (
     <main className="p-6 bg-slate-50 min-h-screen pb-24 relative overflow-x-hidden">
       <header className="mb-8 pt-4">
@@ -326,6 +377,45 @@ export default function ProfilPage() {
         )}
 
 
+      </div>
+
+      {/* Manajemen Kas Section */}
+      <h3 className="font-semibold text-slate-800 mb-4 ml-2 flex items-center gap-2">
+        Manajemen Kas
+      </h3>
+      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 mb-8 overflow-hidden">
+        <button 
+          onClick={() => setShowAddKas(true)}
+          className="w-full mb-4 py-3 bg-emerald-50 text-emerald-600 font-bold rounded-2xl hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 border border-emerald-100"
+        >
+          <Plus size={20} />
+          Tambah Kas Baru
+        </button>
+        
+        <div className="space-y-2">
+          {accounts.map(acc => (
+            <div key={acc.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center border border-slate-200">
+                  <Wallet size={20} className="text-slate-400" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700 text-sm">{acc.name}</p>
+                  {acc.description && <p className="text-[10px] text-slate-500 line-clamp-1">{acc.description}</p>}
+                </div>
+              </div>
+              <button 
+                onClick={() => handleDeleteKas(acc.id, acc.name)}
+                className="w-8 h-8 rounded-full bg-white border border-slate-200 text-red-500 flex items-center justify-center hover:bg-red-50 hover:border-red-200 transition-colors shrink-0 shadow-sm"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+          {accounts.length === 0 && (
+            <p className="text-center text-xs text-slate-500 py-4">Belum ada Kas. Silakan tambah baru.</p>
+          )}
+        </div>
       </div>
 
       {/* Admin Section */}
@@ -522,6 +612,54 @@ export default function ProfilPage() {
                   className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 flex justify-center items-center"
                 >
                   {addUserLoading ? <Loader2 className="animate-spin" size={20} /> : "Buat Akun"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah Kas */}
+      {showAddKas && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Tambah Kas Baru</h2>
+            <form onSubmit={handleAddKas} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nama Kas</label>
+                <input
+                  type="text"
+                  required
+                  value={newKasName}
+                  onChange={(e) => setNewKasName(e.target.value)}
+                  placeholder="Misal: Kas Tabungan"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Deskripsi (Opsional)</label>
+                <input
+                  type="text"
+                  value={newKasDesc}
+                  onChange={(e) => setNewKasDesc(e.target.value)}
+                  placeholder="Misal: Tabungan masa depan..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-medium"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddKas(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingKas || !newKasName.trim()}
+                  className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50 flex justify-center items-center"
+                >
+                  {isSubmittingKas ? <Loader2 className="animate-spin" size={20} /> : "Simpan"}
                 </button>
               </div>
             </form>

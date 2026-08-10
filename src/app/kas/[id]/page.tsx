@@ -8,9 +8,7 @@ import {
   TrendingDown, 
   Wallet,
   History,
-  AlertCircle,
-  Trash2,
-  Loader2
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -45,7 +43,6 @@ export default function KasDashboardPage() {
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [budgetInput, setBudgetInput] = useState("");
   const [isSavingBudget, setIsSavingBudget] = useState(false);
-  const [isDeletingKas, setIsDeletingKas] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -120,25 +117,6 @@ export default function KasDashboardPage() {
     setIsSavingBudget(false);
   };
 
-  const handleDeleteKas = async () => {
-    if (confirm("🚨 PERINGATAN 🚨\nMenghapus Kas ini akan menghapus SEMUA riwayat transaksi di dalamnya secara PERMANEN!\n\nApakah Anda benar-benar yakin ingin menghapus Kas ini?")) {
-      setIsDeletingKas(true);
-      
-      // Hapus semua transaksi milik kas ini terlebih dahulu (untuk menghindari error Foreign Key)
-      await supabase.from('transactions').delete().eq('account_id', accountId);
-      
-      // Hapus akun kas
-      const { error } = await supabase.from('accounts').delete().eq('id', accountId);
-      
-      if (error) {
-        alert("Gagal menghapus Kas: " + error.message);
-        setIsDeletingKas(false);
-      } else {
-        router.push('/');
-      }
-    }
-  };
-
   // Kelompokkan transaksi berdasarkan tanggal
   const groupedTransactions = transactions.reduce((groups: any, tx: any) => {
     const dateStr = new Date(tx.created_at).toLocaleDateString('id-ID', {
@@ -185,19 +163,14 @@ export default function KasDashboardPage() {
   return (
     <main className="min-h-screen bg-slate-50 pb-24 relative overflow-x-hidden">
       {/* Navbar */}
-      <nav className="flex items-center justify-between p-6 pt-8 text-slate-800 relative z-10 gap-2">
-        <button onClick={() => router.push('/')} className="w-10 h-10 bg-white border border-slate-200 hover:bg-slate-100 shadow-sm rounded-full flex items-center justify-center transition-colors shrink-0">
+      <nav className="flex items-center justify-between p-6 pt-8 text-slate-800 relative z-10">
+        <button onClick={() => router.push('/')} className="w-10 h-10 bg-white border border-slate-200 hover:bg-slate-100 shadow-sm rounded-full flex items-center justify-center transition-colors">
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-bold text-lg text-center flex-1 line-clamp-1">{account.name}</h1>
-        <div className="flex gap-2 shrink-0 items-center">
-          <button onClick={() => setShowBudgetModal(true)} className="text-[10px] sm:text-xs font-bold text-slate-600 bg-white shadow-sm px-2 sm:px-3 h-8 sm:h-10 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors flex items-center">
-            Target
-          </button>
-          <button onClick={handleDeleteKas} disabled={isDeletingKas} className="w-8 sm:w-10 h-8 sm:h-10 bg-red-50 text-red-500 hover:bg-red-100 shadow-sm rounded-xl flex items-center justify-center transition-colors disabled:opacity-50">
-            {isDeletingKas ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-          </button>
-        </div>
+        <button onClick={() => setShowBudgetModal(true)} className="text-[10px] sm:text-xs font-bold text-slate-600 bg-white shadow-sm px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+          Target
+        </button>
       </nav>
 
       {/* Saldo Card */}

@@ -74,12 +74,6 @@ export default function Home() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string>("My Family");
   
-  // State untuk modal tambah Kas
-  const [showAddKas, setShowAddKas] = useState(false);
-  const [newKasName, setNewKasName] = useState("");
-  const [newKasDesc, setNewKasDesc] = useState("");
-  const [isSubmittingKas, setIsSubmittingKas] = useState(false);
-
   const [loading, setLoading] = useState(true);
 
   async function fetchData() {
@@ -145,27 +139,6 @@ export default function Home() {
 
     fetchData();
   }, []);
-
-  const handleAddKas = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newKasName.trim()) return;
-    
-    setIsSubmittingKas(true);
-    const { error } = await supabase.from('accounts').insert({
-      name: newKasName,
-      description: newKasDesc
-    });
-
-    if (error) {
-      alert("Gagal menambahkan Kas. Coba lagi.");
-    } else {
-      setNewKasName("");
-      setNewKasDesc("");
-      setShowAddKas(false);
-      fetchData(); // Refresh data
-    }
-    setIsSubmittingKas(false);
-  };
 
   return (
     <main className="p-6 pb-24 relative min-h-screen bg-slate-50 overflow-x-hidden">
@@ -246,19 +219,6 @@ export default function Home() {
                   )}
                 </Link>
               ))}
-              
-              {/* Menu Tambah Kas */}
-              <button 
-                onClick={() => setShowAddKas(true)}
-                className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
-              >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-2 group-hover:bg-emerald-50 transition-colors border border-dashed border-slate-300 shadow-inner text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-200">
-                  <Plus size={28} />
-                </div>
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 group-hover:text-emerald-600 text-center uppercase tracking-wide px-1">
-                  TAMBAH
-                </span>
-              </button>
             </div>
 
             {(!accounts || accounts.length === 0) && !accountsError && (
@@ -271,54 +231,6 @@ export default function Home() {
           </>
         )}
       </div>
-
-      {/* Modal Tambah Kas */}
-      {showAddKas && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-bold text-slate-800 mb-4">Tambah Kas Baru</h2>
-            <form onSubmit={handleAddKas} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nama Kas</label>
-                <input
-                  type="text"
-                  required
-                  value={newKasName}
-                  onChange={(e) => setNewKasName(e.target.value)}
-                  placeholder="Misal: Kas Tabungan"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-medium"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Deskripsi (Opsional)</label>
-                <input
-                  type="text"
-                  value={newKasDesc}
-                  onChange={(e) => setNewKasDesc(e.target.value)}
-                  placeholder="Misal: Tabungan masa depan..."
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-medium"
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddKas(false)}
-                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingKas || !newKasName.trim()}
-                  className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50 flex justify-center items-center"
-                >
-                  {isSubmittingKas ? <Loader2 className="animate-spin" size={20} /> : "Simpan"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
