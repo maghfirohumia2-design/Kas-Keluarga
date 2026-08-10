@@ -130,13 +130,12 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
       <div className="hidden print:block w-full max-w-sm mx-auto p-4 bg-white text-black font-mono">
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold border-b border-black pb-2 mb-2">BUKTI TRANSAKSI</h2>
-          <p className="text-sm">Aplikasi Manajemen Kas</p>
+          <p className="text-sm font-bold uppercase">{accountName}</p>
         </div>
         
         <div className="mb-4 text-sm space-y-1">
           <p className="flex justify-between"><span>Tanggal:</span> <span>{formattedDate}</span></p>
           <p className="flex justify-between"><span>ID Trx:</span> <span className="text-[10px]">{id.split("-")[0]}</span></p>
-          <p className="flex justify-between"><span>Sumber Kas:</span> <span>{accountName}</span></p>
           {userName && (
             <p className="flex justify-between border-t border-black/20 pt-1 mt-1"><span>Kasir:</span> <span>{userName}</span></p>
           )}
@@ -154,7 +153,6 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
         
         <div className="text-center text-xs border-t border-black pt-4">
           <p>Terima kasih</p>
-          <p>Telah menggunakan Sistem Kas</p>
         </div>
       </div>
 

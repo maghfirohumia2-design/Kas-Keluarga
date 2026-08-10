@@ -14,7 +14,7 @@ export default function BottomNav() {
   }
 
   return (
-    <div className="fixed bottom-0 w-full max-w-[480px] bg-white border-t border-slate-100 px-12 py-3 pb-safe flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-50">
+    <div className="fixed bottom-0 w-full max-w-[480px] bg-white border-t border-slate-100 px-12 py-3 pb-safe flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-50 print:hidden">
       <Link href="/" className={`flex flex-col items-center gap-1 ${pathname === '/' ? 'text-emerald-600' : 'text-slate-400 opacity-70 hover:opacity-100 transition-opacity'}`}>
         <div className={`relative w-7 h-7 overflow-hidden rounded-lg ${pathname === '/' ? 'shadow-md shadow-emerald-200 ring-2 ring-emerald-500 ring-offset-2' : ''}`}>
           <Image src="/icons/icon_nav_home.jpg" alt="Beranda" fill className="object-cover" />
