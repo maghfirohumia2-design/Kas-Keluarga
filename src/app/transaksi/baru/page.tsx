@@ -19,16 +19,22 @@ function TransactionFormContent() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState("Admin");
 
   useEffect(() => {
-    async function fetchAccounts() {
+    async function fetchAccountsAndUser() {
       const { data } = await supabase.from("accounts").select("*").order("name");
       if (data) {
         setAccounts(data);
         if (!prefillAccountId && data.length > 0) setAccountId(data[0].id);
       }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.user_metadata?.full_name) {
+        setCurrentUserName(user.user_metadata.full_name);
+      }
     }
-    fetchAccounts();
+    fetchAccountsAndUser();
   }, [prefillAccountId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,6 +70,7 @@ function TransactionFormContent() {
         amount: parseFloat(amount.replace(/\D/g, "")),
         description,
         receipt_url,
+        user_name: currentUserName,
       });
 
       if (error) throw error;

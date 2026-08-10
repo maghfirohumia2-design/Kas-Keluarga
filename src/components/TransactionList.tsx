@@ -50,7 +50,17 @@ export default function TransactionList({ initialTransactions }: { initialTransa
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800 text-sm">{tx.description}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{tx.accounts?.name}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="text-xs text-slate-500">{tx.accounts?.name}</p>
+                  {tx.user_name && (
+                    <>
+                      <span className="text-[10px] text-slate-300">•</span>
+                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-sm flex items-center gap-0.5">
+                        👤 {tx.user_name}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">

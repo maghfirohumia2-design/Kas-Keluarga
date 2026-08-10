@@ -20,6 +20,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const [file, setFile] = useState<File | null>(null);
   const [existingReceipt, setExistingReceipt] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [initialFetchLoading, setInitialFetchLoading] = useState(true);
 
@@ -40,6 +41,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
         setDescription(txData.description);
         setExistingReceipt(txData.receipt_url);
         setCreatedAt(txData.created_at);
+        setUserName(txData.user_name || "Admin");
       }
       
       setInitialFetchLoading(false);
@@ -135,6 +137,9 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
           <p className="flex justify-between"><span>Tanggal:</span> <span>{formattedDate}</span></p>
           <p className="flex justify-between"><span>ID Trx:</span> <span className="text-[10px]">{id.split("-")[0]}</span></p>
           <p className="flex justify-between"><span>Sumber Kas:</span> <span>{accountName}</span></p>
+          {userName && (
+            <p className="flex justify-between border-t border-black/20 pt-1 mt-1"><span>Kasir:</span> <span>{userName}</span></p>
+          )}
         </div>
         
         <div className="border-t border-b border-dashed border-black py-4 mb-4">

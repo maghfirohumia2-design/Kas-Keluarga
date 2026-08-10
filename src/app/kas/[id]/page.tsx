@@ -206,11 +206,19 @@ export default function KasDashboardPage() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800 text-sm line-clamp-1">{tx.description}</p>
-                        <p className="text-xs text-slate-400 mt-0.5 font-medium">
-                          {new Date(tx.created_at).toLocaleTimeString('id-ID', {
-                            hour: '2-digit', minute: '2-digit'
-                          })}
-                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs text-slate-400 font-medium">
+                            {new Date(tx.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {tx.user_name && (
+                            <>
+                              <span className="text-[10px] text-slate-300">•</span>
+                              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-sm flex items-center gap-0.5">
+                                👤 {tx.user_name}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0 ml-2">
