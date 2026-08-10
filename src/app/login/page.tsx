@@ -131,12 +131,11 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col justify-center p-6 relative overflow-hidden">
+    <main className="min-h-screen flex flex-col justify-center p-6 relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-900">
       {/* Background Decoration */}
-      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-900 -z-20" />
-      <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 -z-10 mix-blend-overlay" />
+      <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 pointer-events-none mix-blend-overlay" />
 
-      <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-sm w-full mx-auto relative z-10 transition-all duration-300">
+      <div className="bg-white p-8 rounded-3xl shadow-2xl shadow-emerald-900/50 border border-white/20 max-w-sm w-full mx-auto relative z-10 transition-all duration-300">
         
         {step === 1 ? (
           // ================= STEP 1: NOMOR HP =================
