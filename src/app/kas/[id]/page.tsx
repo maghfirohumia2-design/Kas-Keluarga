@@ -8,7 +8,9 @@ import {
   TrendingDown, 
   Wallet,
   History,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -37,6 +39,7 @@ export default function KasDashboardPage() {
   const [error, setError] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -180,9 +183,17 @@ export default function KasDashboardPage() {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-inner border border-white/20 shrink-0">
               <Wallet size={24} />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight truncate text-right">
-              Rp {balance.toLocaleString('id-ID')}
-            </h2>
+            <div className="flex items-center gap-3 ml-auto">
+              <h2 className="text-[15px] font-medium tracking-widest truncate text-right opacity-95">
+                {showBalance ? `Rp ${balance.toLocaleString('id-ID')}` : 'Rp •••••••••'}
+              </h2>
+              <button 
+                onClick={() => setShowBalance(!showBalance)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors active:scale-95 bg-white/10"
+              >
+                {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
           </div>
 
           {/* Budget Progress (if exists) */}
