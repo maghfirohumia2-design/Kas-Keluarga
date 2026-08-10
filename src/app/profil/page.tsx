@@ -8,7 +8,7 @@ import Image from "next/image";
 
 export default function ProfilPage() {
   const [phone, setPhone] = useState<string | null>("Memuat...");
-  const [fullName, setFullName] = useState<string>("Keluarga Basmalah");
+  const [fullName, setFullName] = useState<string>("My Profile");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   
   const [isEditingProfile, setIsEditingProfile] = useState(false);
