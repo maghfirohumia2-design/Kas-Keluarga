@@ -175,14 +175,15 @@ export default function KasDashboardPage() {
 
       {/* Saldo Card */}
       <div className="px-6 relative z-10 mt-2 mb-8">
-        <div className={`bg-gradient-to-br ${gradient} rounded-[32px] p-6 shadow-2xl shadow-emerald-500/20 flex flex-col items-center text-center text-white`}>
-          <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white mb-4 shadow-inner border border-white/20">
-            <Wallet size={28} />
+        <div className={`bg-gradient-to-br ${gradient} rounded-[28px] p-5 shadow-xl shadow-emerald-500/20 flex flex-col text-white`}>
+          <div className="flex items-center gap-4 mb-5">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-inner border border-white/20 shrink-0">
+              <Wallet size={24} />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight truncate">
+              Rp {balance.toLocaleString('id-ID')}
+            </h2>
           </div>
-          <p className="text-xs font-semibold text-white/80 uppercase tracking-widest mb-2">Total Saldo</p>
-          <h2 className="text-4xl font-black tracking-tight mb-6">
-            Rp {balance.toLocaleString('id-ID')}
-          </h2>
 
           {/* Budget Progress (if exists) */}
           {account.budget_limit > 0 && (
