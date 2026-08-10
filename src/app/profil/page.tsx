@@ -288,16 +288,7 @@ export default function ProfilPage() {
           </p>
         )}
 
-        <div className="flex gap-4 w-full mt-2">
-          <div className="flex-1 bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</p>
-            <p className="font-bold text-emerald-600">Aktif</p>
-          </div>
-          <div className="flex-1 bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tipe</p>
-            <p className="font-bold text-emerald-600">Premium</p>
-          </div>
-        </div>
+
       </div>
 
       {/* Admin Section */}
