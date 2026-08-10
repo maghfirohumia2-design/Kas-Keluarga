@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Upload, Loader2, Receipt, Printer } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -169,9 +170,11 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
           <button 
             type="button" 
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-slate-800 transition-colors text-sm font-bold"
+            className="flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all text-sm font-bold active:scale-95"
           >
-            <Printer size={16} />
+            <div className="relative w-6 h-6 rounded-md overflow-hidden shadow-inner">
+              <Image src="/icons/icon_print.jpg" alt="Print" fill className="object-cover" />
+            </div>
             Cetak
           </button>
         </header>
