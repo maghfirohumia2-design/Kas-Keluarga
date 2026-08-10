@@ -144,11 +144,11 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-[100dvh] flex flex-col justify-between relative overflow-hidden bg-emerald-950">
+    <main className="min-h-[100dvh] flex flex-col justify-between relative overflow-hidden bg-emerald-900">
       {/* Glowing Orbs for Mesh Gradient */}
-      <div className="absolute top-[-5%] left-[-10%] w-[350px] h-[350px] bg-teal-400 rounded-full mix-blend-screen filter blur-[120px] opacity-50 pointer-events-none" />
-      <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-emerald-500 rounded-full mix-blend-screen filter blur-[130px] opacity-40 pointer-events-none" />
-      <div className="absolute bottom-[20%] left-[20%] w-[300px] h-[300px] bg-cyan-400 rounded-full mix-blend-screen filter blur-[100px] opacity-30 pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-emerald-400 rounded-full mix-blend-screen filter blur-[130px] opacity-60 pointer-events-none" />
+      <div className="absolute top-[15%] right-[-10%] w-[350px] h-[350px] bg-yellow-300 rounded-full mix-blend-screen filter blur-[120px] opacity-40 pointer-events-none" />
+      <div className="absolute bottom-[10%] left-[15%] w-[300px] h-[300px] bg-white rounded-full mix-blend-screen filter blur-[100px] opacity-25 pointer-events-none" />
       
       {/* Texture Layer */}
       <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none mix-blend-overlay" />
