@@ -131,25 +131,24 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col justify-center p-6 bg-slate-50 relative overflow-hidden">
+    <main className="min-h-screen flex flex-col justify-center p-6 relative overflow-hidden">
       {/* Background Decoration */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-emerald-500 rounded-b-[40px] -z-10" />
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-900 -z-20" />
+      <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 -z-10 mix-blend-overlay" />
 
       <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-sm w-full mx-auto relative z-10 transition-all duration-300">
         
         {step === 1 ? (
           // ================= STEP 1: NOMOR HP =================
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-              <Wallet size={32} />
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-300 to-teal-500 text-white rounded-[24px] flex items-center justify-center mb-4 shadow-[0_8px_30px_rgb(16,185,129,0.4)] border-[3px] border-emerald-50">
+                <Wallet size={36} strokeWidth={2.5} className="drop-shadow-md" />
+              </div>
+              <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+                Kas Digital
+              </h1>
             </div>
-            
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">
-              {isLogin ? "Selamat Datang" : "Buat Akun Baru"}
-            </h1>
-            <p className="text-sm text-slate-500 mb-8">
-              Aplikasi Manajemen Kas Keluarga & Lembaga
-            </p>
 
             {message && (
               <div className={`p-3 rounded-xl text-sm font-medium mb-6 ${message.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
