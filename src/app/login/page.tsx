@@ -115,29 +115,21 @@ export default function LoginPage() {
     const dummyEmail = `hp_${phone}@kaskeluarga.com`;
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: fullPin });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({ email: dummyEmail, password: fullPin });
-        if (error) throw error;
-        setMessage({ text: "Pendaftaran berhasil! Mengalihkan...", type: "success" });
-        // Karena auto-login (session tercipta jika email confirm mati), dia akan ter-redirect oleh AuthProvider.
-        // Jika gagal auto-login, ubah state ke mode login
-        setIsLogin(true);
-        setStep(1);
-        setPin(["", "", "", "", "", ""]);
+      const { error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: fullPin });
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          // Auto-register untuk testing
+          const { error: signUpError } = await supabase.auth.signUp({ email: dummyEmail, password: fullPin });
+          if (signUpError) throw signUpError;
+        } else {
+          throw error;
+        }
       }
     } catch (error: any) {
-      // Bersihkan kotak agar user bisa coba lagi
       setPin(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
 
-      if (error.message.includes("Invalid login credentials")) {
-        setMessage({ text: "PIN salah atau nomor belum terdaftar.", type: "error" });
-      } else {
-        setMessage({ text: error.message || "Terjadi kesalahan", type: "error" });
-      }
+      setMessage({ text: "PIN salah. Coba lagi.", type: "error" });
     } finally {
       setLoading(false);
     }
