@@ -42,7 +42,8 @@ export default function KasDashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
-  const [filterDate, setFilterDate] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -123,10 +124,13 @@ export default function KasDashboardPage() {
     setIsSavingBudget(false);
   };
 
-  // Filter transaksi
-  const filteredTxList = filterDate 
-    ? transactions.filter(tx => tx.created_at.startsWith(filterDate))
-    : transactions;
+  // Filter transaksi berdasarkan rentang tanggal
+  const filteredTxList = transactions.filter(tx => {
+    const txDate = tx.created_at.split('T')[0];
+    if (filterStartDate && txDate < filterStartDate) return false;
+    if (filterEndDate && txDate > filterEndDate) return false;
+    return true;
+  });
 
   // Kelompokkan transaksi berdasarkan tanggal
   const groupedTransactions = filteredTxList.reduce((groups: any, tx: any) => {
@@ -226,17 +230,26 @@ export default function KasDashboardPage() {
 
       {/* Riwayat Khusus */}
       <div className="px-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col mb-4 gap-3">
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
             <History size={18} className="text-emerald-500" />
             Riwayat
           </h3>
-          <input 
-            type="date" 
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm w-32"
-          />
+          <div className="flex items-center gap-2 w-full">
+            <input 
+              type="date" 
+              value={filterStartDate}
+              onChange={(e) => setFilterStartDate(e.target.value)}
+              className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm flex-1"
+            />
+            <span className="text-[10px] text-slate-400 font-black uppercase">s/d</span>
+            <input 
+              type="date" 
+              value={filterEndDate}
+              onChange={(e) => setFilterEndDate(e.target.value)}
+              className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm flex-1"
+            />
+          </div>
         </div>
 
         <div className="space-y-5">
