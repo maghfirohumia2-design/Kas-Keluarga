@@ -64,6 +64,12 @@ export default function ProfilPage() {
         data: { full_name: tempName }
       });
       if (error) throw error;
+
+      // Update transaksi lama yang menggunakan nama lama agar ikut berubah
+      if (fullName && fullName !== tempName) {
+        await supabase.from("transactions").update({ user_name: tempName }).eq("user_name", fullName);
+      }
+
       setFullName(tempName);
       setIsEditingProfile(false);
     } catch (error) {
