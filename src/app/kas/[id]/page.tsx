@@ -425,7 +425,7 @@ export default function KasDashboardPage() {
       )}
 
       {/* Floating Action Button (FAB) */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pb-safe">
+      <div className="fixed bottom-[90px] right-6 z-50 flex flex-col items-end gap-3 pb-safe">
         {showFabMenu && (
           <div className="flex flex-col gap-3 items-end animate-in slide-in-from-bottom-5 fade-in duration-200">
             <Link 
