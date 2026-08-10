@@ -185,7 +185,7 @@ export default function KasDashboardPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-bold text-lg text-center flex-1 line-clamp-1">{account.name}</h1>
-        <button onClick={() => setShowBudgetModal(true)} className="text-[10px] sm:text-xs font-bold text-slate-600 bg-white shadow-sm px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+        <button onClick={() => setShowBudgetModal(true)} className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 shadow-sm px-2 sm:px-3 py-1.5 rounded-xl border border-emerald-200 hover:bg-emerald-100 transition-colors">
           Target
         </button>
       </nav>
