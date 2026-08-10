@@ -97,9 +97,14 @@ export default function KasDashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-slate-200 rounded-full mb-4"></div>
-          <div className="h-4 w-32 bg-slate-200 rounded"></div>
+        <div className="flex flex-col items-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-75"></div>
+            <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-lg border-4 border-white animate-bounce">
+              <Wallet size={36} className="text-white" />
+            </div>
+          </div>
+          <p className="text-sm text-slate-400 font-bold uppercase tracking-[0.2em] animate-pulse">Mengambil Data...</p>
         </div>
       </div>
     );
