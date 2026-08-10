@@ -269,7 +269,7 @@ export default function KasDashboardPage() {
         <div className="space-y-5">
           {Object.keys(groupedTransactions).map((date) => (
             <div key={date}>
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+              <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
                 {date}
               </h4>
               <div className="space-y-2.5">
