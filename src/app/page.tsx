@@ -38,8 +38,14 @@ const getColorClassesForAccount = (name: string) => {
   if (lowerName.includes("keluarga") || lowerName.includes("rumah")) 
     return "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 group-hover:text-emerald-700 border-emerald-100/50";
     
-  if (lowerName.includes("kantor") || lowerName.includes("psv") || lowerName.includes("kerja") || lowerName.includes("spv") || lowerName.includes("it")) 
+  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) 
+    return "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 group-hover:text-indigo-700 border-indigo-100/50";
+    
+  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) 
     return "bg-blue-50 text-blue-600 group-hover:bg-blue-100 group-hover:text-blue-700 border-blue-100/50";
+    
+  if (lowerName.includes("kantor") || lowerName.includes("kerja")) 
+    return "bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100 group-hover:text-cyan-700 border-cyan-100/50";
     
   if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah")) 
     return "bg-orange-50 text-orange-600 group-hover:bg-orange-100 group-hover:text-orange-700 border-orange-100/50";
@@ -115,7 +121,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="p-6 pb-24 relative min-h-screen bg-slate-50">
+    <main className="p-6 pb-24 relative min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50">
       {/* Header Profile */}
       <header className="mb-6 pt-4 flex justify-between items-center">
         <div>
@@ -132,7 +138,7 @@ export default function Home() {
       </header>
 
       {/* Grid Menu Kas (Gaya Icon Shopee) */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[200px]">
+      <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white min-h-[200px]">
         {accountsError && (
           <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 mb-4">
             Gagal mengambil data dari database. Pastikan koneksi aman.
