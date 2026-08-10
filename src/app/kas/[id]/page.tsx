@@ -125,11 +125,13 @@ export default function KasDashboardPage() {
   };
 
   // Filter transaksi berdasarkan rentang tanggal
+  // Hanya filter jika KEDUA tanggal sudah dipilih dan valid
+  const isFilterActive = filterStartDate && filterEndDate && filterStartDate <= filterEndDate;
+
   const filteredTxList = transactions.filter(tx => {
+    if (!isFilterActive) return true;
     const txDate = tx.created_at.split('T')[0];
-    if (filterStartDate && txDate < filterStartDate) return false;
-    if (filterEndDate && txDate > filterEndDate) return false;
-    return true;
+    return txDate >= filterStartDate && txDate <= filterEndDate;
   });
 
   // Kelompokkan transaksi berdasarkan tanggal
@@ -235,20 +237,32 @@ export default function KasDashboardPage() {
             <History size={18} className="text-emerald-500" />
             <span className="hidden sm:inline">Riwayat</span>
           </h3>
-          <div className="flex items-center gap-1.5">
-            <input 
-              type="date" 
-              value={filterStartDate}
-              onChange={(e) => setFilterStartDate(e.target.value)}
-              className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
-            />
-            <span className="text-[9px] text-slate-400 font-black uppercase">s/d</span>
-            <input 
-              type="date" 
-              value={filterEndDate}
-              onChange={(e) => setFilterEndDate(e.target.value)}
-              className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
-            />
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1.5">
+              <input 
+                type="date" 
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+                className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
+              />
+              <span className="text-[9px] text-slate-400 font-black uppercase">s/d</span>
+              <input 
+                type="date" 
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+                className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
+              />
+            </div>
+            {filterStartDate && filterEndDate && filterStartDate > filterEndDate && (
+              <span className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                ⚠️ Pilih rentang tanggal yang benar
+              </span>
+            )}
+            {((filterStartDate && !filterEndDate) || (!filterStartDate && filterEndDate)) && (
+              <span className="text-[9px] text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                ⏳ Lengkapi kedua tanggal untuk mencari
+              </span>
+            )}
           </div>
         </div>
 
