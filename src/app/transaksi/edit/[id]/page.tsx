@@ -108,7 +108,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   return (
     <main className="p-6 pb-24 bg-slate-50 min-h-screen">
       <header className="mb-6 pt-4 flex items-center gap-4">
-        <Link href="/transaksi" className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-100 transition-colors">
+        <Link href={returnTo || "/"} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-100 transition-colors">
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-xl font-bold text-slate-800">Ubah Transaksi</h1>
