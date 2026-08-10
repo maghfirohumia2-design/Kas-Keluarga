@@ -230,24 +230,24 @@ export default function KasDashboardPage() {
 
       {/* Riwayat Khusus */}
       <div className="px-6">
-        <div className="flex flex-col mb-4 gap-3">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-slate-800 flex items-center gap-1.5 shrink-0">
             <History size={18} className="text-emerald-500" />
-            Riwayat
+            <span className="hidden sm:inline">Riwayat</span>
           </h3>
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex items-center gap-1.5">
             <input 
               type="date" 
               value={filterStartDate}
               onChange={(e) => setFilterStartDate(e.target.value)}
-              className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm flex-1"
+              className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
             />
-            <span className="text-[10px] text-slate-400 font-black uppercase">s/d</span>
+            <span className="text-[9px] text-slate-400 font-black uppercase">s/d</span>
             <input 
               type="date" 
               value={filterEndDate}
               onChange={(e) => setFilterEndDate(e.target.value)}
-              className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm flex-1"
+              className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
             />
           </div>
         </div>
