@@ -198,7 +198,7 @@ export default function KasDashboardPage() {
               <Wallet size={24} />
             </div>
             <div className="flex items-center gap-3 ml-auto">
-              <h2 className="text-[15px] font-medium tracking-widest truncate text-right opacity-95">
+              <h2 className="text-[16px] font-bold tracking-tight truncate text-right">
                 {showBalance ? `Rp ${balance.toLocaleString('id-ID')}` : 'Rp •••••••••'}
               </h2>
               <button 
