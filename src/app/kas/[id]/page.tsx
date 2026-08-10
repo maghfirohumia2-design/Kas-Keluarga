@@ -14,6 +14,17 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
+const getGradientForAccount = (name: string) => {
+  if (!name) return "from-emerald-500 to-teal-500";
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return "from-emerald-500 to-teal-500";
+  if (lowerName.includes("kantor") || lowerName.includes("psv") || lowerName.includes("kerja")) return "from-blue-500 to-indigo-500";
+  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah")) return "from-orange-400 to-red-500";
+  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return "from-purple-500 to-pink-500";
+  if (lowerName.includes("belanja") || lowerName.includes("toko")) return "from-pink-500 to-rose-500";
+  return "from-slate-700 to-slate-900";
+};
+
 export default function KasDashboardPage() {
   const params = useParams();
   const router = useRouter();
@@ -107,14 +118,13 @@ export default function KasDashboardPage() {
     );
   }
 
+  const gradient = getGradientForAccount(account.name);
+
   return (
     <main className="min-h-screen bg-slate-50 pb-24 relative overflow-x-hidden">
-      {/* Background Header */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-slate-800 rounded-b-[40px] -z-10" />
-
       {/* Navbar */}
-      <nav className="flex items-center justify-between p-6 pt-8 text-white relative z-10">
-        <button onClick={() => router.push('/')} className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-colors">
+      <nav className="flex items-center justify-between p-6 pt-8 text-slate-800 relative z-10">
+        <button onClick={() => router.push('/')} className="w-10 h-10 bg-white border border-slate-200 hover:bg-slate-100 shadow-sm rounded-full flex items-center justify-center transition-colors">
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-bold text-lg">{account.name}</h1>
@@ -123,34 +133,34 @@ export default function KasDashboardPage() {
 
       {/* Saldo Card */}
       <div className="px-6 relative z-10 mt-2 mb-8">
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center text-center">
-          <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 mb-4 shadow-inner border border-slate-200">
+        <div className={`bg-gradient-to-br ${gradient} rounded-[32px] p-6 shadow-2xl shadow-emerald-500/20 flex flex-col items-center text-center text-white`}>
+          <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white mb-4 shadow-inner border border-white/20">
             <Wallet size={28} />
           </div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Total Saldo</p>
-          <h2 className={`text-4xl font-black tracking-tight mb-6 ${balance < 0 ? 'text-red-500' : 'text-slate-800'}`}>
+          <p className="text-xs font-semibold text-white/80 uppercase tracking-widest mb-2">Total Saldo</p>
+          <h2 className="text-4xl font-black tracking-tight mb-6">
             Rp {balance.toLocaleString('id-ID')}
           </h2>
           
           <div className="flex gap-4 w-full">
             <Link 
               href={`/transaksi/baru?accountId=${accountId}&type=income`}
-              className="flex-1 bg-emerald-50 hover:bg-emerald-100 transition-colors border border-emerald-100 rounded-2xl py-3 flex flex-col items-center justify-center gap-1"
+              className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-2xl py-3 flex flex-col items-center justify-center gap-1 shadow-sm"
             >
-              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-sm">
                 <TrendingUp size={16} />
               </div>
-              <span className="text-xs font-bold text-emerald-700 mt-1">Uang Masuk</span>
+              <span className="text-xs font-bold text-white mt-1">Uang Masuk</span>
             </Link>
             
             <Link 
               href={`/transaksi/baru?accountId=${accountId}&type=expense`}
-              className="flex-1 bg-red-50 hover:bg-red-100 transition-colors border border-red-100 rounded-2xl py-3 flex flex-col items-center justify-center gap-1"
+              className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-2xl py-3 flex flex-col items-center justify-center gap-1 shadow-sm"
             >
-              <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-white text-red-500 flex items-center justify-center shadow-sm">
                 <TrendingDown size={16} />
               </div>
-              <span className="text-xs font-bold text-red-700 mt-1">Uang Keluar</span>
+              <span className="text-xs font-bold text-white mt-1">Uang Keluar</span>
             </Link>
           </div>
         </div>
