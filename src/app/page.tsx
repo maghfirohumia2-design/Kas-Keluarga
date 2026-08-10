@@ -12,23 +12,14 @@ import {
   Coins,
   Monitor,
   ClipboardList,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
-// Fungsi untuk mendapatkan ikon berdasarkan nama kas
-const getIconForAccount = (name: string) => {
-  const lowerName = name.toLowerCase();
-  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return <HomeIcon size={32} />;
-  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return <Monitor size={32} />;
-  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) return <ClipboardList size={32} />;
-  if (lowerName.includes("kantor") || lowerName.includes("kerja")) return <Briefcase size={32} />;
-  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return <GraduationCap size={32} />;
-  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return <Car size={32} />;
-  if (lowerName.includes("belanja") || lowerName.includes("toko")) return <ShoppingBag size={32} />;
-  return <Coins size={32} />;
-};
+// ... (other functions remain the same) ...
 
 // Fungsi warna icon per kas
 const getColorClassesForAccount = (name: string) => {
@@ -59,6 +50,21 @@ const getColorClassesForAccount = (name: string) => {
   return "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-700 border-slate-200/50";
 };
 
+// Fungsi ikon per kas
+const getIconForAccount = (name: string) => {
+  if (!name) return <Coins size={32} />;
+  const lowerName = name.toLowerCase();
+  
+  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return <HomeIcon size={32} />;
+  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return <Monitor size={32} />;
+  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) return <ClipboardList size={32} />;
+  if (lowerName.includes("kantor") || lowerName.includes("kerja")) return <Briefcase size={32} />;
+  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return <GraduationCap size={32} />;
+  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return <Car size={32} />;
+  if (lowerName.includes("belanja") || lowerName.includes("toko")) return <ShoppingBag size={32} />;
+  return <Coins size={32} />;
+};
+
 export default function Home() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
@@ -66,48 +72,54 @@ export default function Home() {
   const [accountsError, setAccountsError] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string>("My Family");
+  
+  // State untuk modal tambah Kas
+  const [showAddKas, setShowAddKas] = useState(false);
+  const [newKasName, setNewKasName] = useState("");
+  const [newKasDesc, setNewKasDesc] = useState("");
+  const [isSubmittingKas, setIsSubmittingKas] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      const { data: accountsData, error: accountsError } = await supabase
-        .from('accounts')
-        .select('*')
-        .order('created_at', { ascending: true });
+  async function fetchData() {
+    setLoading(true);
+    const { data: accountsData, error: accountsError } = await supabase
+      .from('accounts')
+      .select('*')
+      .order('created_at', { ascending: true });
 
-      const { data: transactions } = await supabase
-        .from('transactions')
-        .select('account_id, type, amount');
+    const { data: transactions } = await supabase
+      .from('transactions')
+      .select('account_id, type, amount');
 
-      if (accountsError) {
-        setAccountsError(true);
-      } else {
-        setAccounts(accountsData || []);
-        
-        const newBalances: Record<string, number> = {};
-        let newTotal = 0;
-        
-        accountsData?.forEach(acc => { newBalances[acc.id] = 0; });
-        
-        transactions?.forEach(tx => {
-          const amount = Number(tx.amount);
-          if (tx.type === 'income') {
-            newBalances[tx.account_id] += amount;
-            newTotal += amount;
-          } else {
-            newBalances[tx.account_id] -= amount;
-            newTotal -= amount;
-          }
-        });
-        
-        setBalances(newBalances);
-        setTotalBalance(newTotal);
-      }
-      setLoading(false);
+    if (accountsError) {
+      setAccountsError(true);
+    } else {
+      setAccounts(accountsData || []);
+      
+      const newBalances: Record<string, number> = {};
+      let newTotal = 0;
+      
+      accountsData?.forEach(acc => { newBalances[acc.id] = 0; });
+      
+      transactions?.forEach(tx => {
+        const amount = Number(tx.amount);
+        if (tx.type === 'income') {
+          newBalances[tx.account_id] += amount;
+          newTotal += amount;
+        } else {
+          newBalances[tx.account_id] -= amount;
+          newTotal -= amount;
+        }
+      });
+      
+      setBalances(newBalances);
+      setTotalBalance(newTotal);
     }
+    setLoading(false);
+  }
 
+  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.user_metadata?.avatar_url) {
         setAvatarUrl(user.user_metadata.avatar_url);
@@ -119,6 +131,27 @@ export default function Home() {
 
     fetchData();
   }, []);
+
+  const handleAddKas = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKasName.trim()) return;
+    
+    setIsSubmittingKas(true);
+    const { error } = await supabase.from('accounts').insert({
+      name: newKasName,
+      description: newKasDesc
+    });
+
+    if (error) {
+      alert("Gagal menambahkan Kas. Coba lagi.");
+    } else {
+      setNewKasName("");
+      setNewKasDesc("");
+      setShowAddKas(false);
+      fetchData(); // Refresh data
+    }
+    setIsSubmittingKas(false);
+  };
 
   return (
     <main className="p-6 pb-24 relative min-h-screen bg-slate-50 overflow-x-hidden">
@@ -180,35 +213,78 @@ export default function Home() {
                 </Link>
               ))}
               
-              {/* Menu "Tambah Kas" atau Placeholder kosong (Opsional) */}
-              {accounts && accounts.length > 0 && (
-                 <Link href="#" onClick={(e) => { e.preventDefault(); alert('Untuk menambah Kas baru, silakan tambahkan di Database Supabase Anda.'); }} className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform">
-                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-slate-100 transition-colors border border-slate-100 shadow-inner text-slate-400 group-hover:text-slate-500">
-                     <div className="grid grid-cols-2 gap-1 w-6 h-6">
-                       <div className="bg-current rounded-sm"></div>
-                       <div className="bg-current rounded-sm"></div>
-                       <div className="bg-current rounded-sm"></div>
-                       <div className="bg-current rounded-sm rotate-45 transform scale-75"></div>
-                     </div>
-                   </div>
-                   <span className="text-[10px] sm:text-xs font-bold text-slate-700 text-center uppercase tracking-wide px-1">
-                     LAINNYA
-                   </span>
-                 </Link>
-              )}
+              {/* Menu Tambah Kas */}
+              <button 
+                onClick={() => setShowAddKas(true)}
+                className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
+              >
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-emerald-50 transition-colors border border-dashed border-slate-300 shadow-inner text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-200">
+                  <Plus size={28} />
+                </div>
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 group-hover:text-emerald-600 text-center uppercase tracking-wide px-1">
+                  TAMBAH
+                </span>
+              </button>
             </div>
 
             {(!accounts || accounts.length === 0) && !accountsError && (
               <div className="py-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-2xl mt-4">
                 <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
                 <p className="font-medium text-slate-600">Belum ada Menu Kas</p>
-                <p className="text-xs mt-1">Tambahkan dari database.</p>
+                <p className="text-xs mt-1">Tambahkan kas baru untuk memulai.</p>
               </div>
             )}
           </>
         )}
       </div>
 
+      {/* Modal Tambah Kas */}
+      {showAddKas && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Tambah Kas Baru</h2>
+            <form onSubmit={handleAddKas} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nama Kas</label>
+                <input
+                  type="text"
+                  required
+                  value={newKasName}
+                  onChange={(e) => setNewKasName(e.target.value)}
+                  placeholder="Misal: Kas Tabungan"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Deskripsi (Opsional)</label>
+                <input
+                  type="text"
+                  value={newKasDesc}
+                  onChange={(e) => setNewKasDesc(e.target.value)}
+                  placeholder="Misal: Tabungan masa depan..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-medium"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddKas(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingKas || !newKasName.trim()}
+                  className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50 flex justify-center items-center"
+                >
+                  {isSubmittingKas ? <Loader2 className="animate-spin" size={20} /> : "Simpan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
