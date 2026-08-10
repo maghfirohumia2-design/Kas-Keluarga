@@ -2,9 +2,22 @@
 
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Phone, Wallet, ArrowLeft } from "lucide-react";
+import { Loader2, Phone, Wallet, ArrowLeft, PieChart, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    { title: "Manajemen Pintar", desc: "Kelola kas Anda dengan lebih transparan & efisien.", icon: <Wallet size={56} className="text-white drop-shadow-md mb-3 mx-auto" /> },
+    { title: "Laporan Real-Time", desc: "Pantau setiap mutasi masuk & keluar kapan saja.", icon: <PieChart size={56} className="text-white drop-shadow-md mb-3 mx-auto" /> },
+    { title: "Aman & Terpercaya", desc: "Data Anda dienkripsi dan aman tersimpan di cloud.", icon: <ShieldCheck size={56} className="text-white drop-shadow-md mb-3 mx-auto" /> }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
   const [isLogin, setIsLogin] = useState(true);
   const [step, setStep] = useState<1 | 2>(1);
   const [phone, setPhone] = useState("");
@@ -135,17 +148,39 @@ export default function LoginPage() {
       {/* Background Decoration */}
       <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 pointer-events-none mix-blend-overlay" />
 
-      {/* Top Brand Area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="w-24 h-24 bg-white text-emerald-600 rounded-[32px] flex items-center justify-center mb-6 shadow-xl rotate-3">
-          <Wallet size={48} strokeWidth={2.5} />
+      {/* Top Carousel Area */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+        <div className="w-full max-w-sm mx-auto relative min-h-[200px]">
+          {slides.map((slide, idx) => (
+            <div
+              key={idx}
+              className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-in-out ${
+                idx === currentSlide ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 translate-x-8 pointer-events-none"
+              }`}
+            >
+              {slide.icon}
+              <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-md text-center">
+                {slide.title}
+              </h1>
+              <p className="text-emerald-100 mt-2 text-sm font-medium drop-shadow-sm text-center px-4 leading-relaxed">
+                {slide.desc}
+              </p>
+            </div>
+          ))}
         </div>
-        <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
-          Kas Digital
-        </h1>
-        <p className="text-emerald-100 mt-2 font-medium drop-shadow-sm text-center">
-          Manajemen Kas Keluarga & Lembaga
-        </p>
+        
+        {/* Pagination Dots */}
+        <div className="flex gap-2 mt-2">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                idx === currentSlide ? "w-6 bg-white" : "w-1.5 bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Bottom Sheet Drawer */}
