@@ -176,11 +176,11 @@ export default function KasDashboardPage() {
       {/* Saldo Card */}
       <div className="px-6 relative z-10 mt-2 mb-8">
         <div className={`bg-gradient-to-br ${gradient} rounded-[28px] p-5 shadow-xl shadow-emerald-500/20 flex flex-col text-white`}>
-          <div className="flex items-center gap-4 mb-5">
+          <div className="flex items-center justify-between w-full mb-5 gap-4">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-inner border border-white/20 shrink-0">
               <Wallet size={24} />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight truncate">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight truncate text-right">
               Rp {balance.toLocaleString('id-ID')}
             </h2>
           </div>
