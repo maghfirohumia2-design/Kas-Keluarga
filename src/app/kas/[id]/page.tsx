@@ -24,6 +24,8 @@ export default function KasDashboardPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -174,7 +176,11 @@ export default function KasDashboardPage() {
               </h4>
               <div className="space-y-3">
                 {groupedTransactions[date].map((tx: any) => (
-                  <div key={tx.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer">
+                  <div 
+                    key={tx.id} 
+                    onClick={() => setSelectedTx(tx)}
+                    className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer"
+                  >
                     <div className="flex gap-3">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner border ${
                         tx.type === 'income' 
@@ -217,6 +223,59 @@ export default function KasDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Modal Opsi Transaksi */}
+      {selectedTx && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200">
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-bold text-slate-800 line-clamp-1">{selectedTx.description}</h3>
+              <p className={`text-2xl font-black mt-2 ${selectedTx.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                {selectedTx.type === 'income' ? '+' : '-'}Rp {Number(selectedTx.amount).toLocaleString('id-ID')}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Link 
+                href={`/transaksi/edit/${selectedTx.id}?returnTo=/kas/${accountId}`}
+                className="w-full py-4 bg-emerald-50 text-emerald-600 font-bold rounded-2xl flex items-center justify-center transition-colors hover:bg-emerald-100"
+              >
+                Ubah Transaksi
+              </Link>
+              
+              <button 
+                onClick={async () => {
+                  if (confirm("Yakin ingin menghapus transaksi ini?")) {
+                    setIsDeleting(true);
+                    const { error } = await supabase.from('transactions').delete().eq('id', selectedTx.id);
+                    if (!error) {
+                      setTransactions(transactions.filter(t => t.id !== selectedTx.id));
+                      const amount = Number(selectedTx.amount);
+                      if (selectedTx.type === 'income') setBalance(prev => prev - amount);
+                      else setBalance(prev => prev + amount);
+                    }
+                    setIsDeleting(false);
+                    setSelectedTx(null);
+                  }
+                }}
+                disabled={isDeleting}
+                className="w-full py-4 bg-red-50 text-red-500 font-bold rounded-2xl flex items-center justify-center transition-colors hover:bg-red-100 disabled:opacity-50"
+              >
+                {isDeleting ? "Menghapus..." : "Hapus Transaksi"}
+              </button>
+              
+              <button 
+                onClick={() => setSelectedTx(null)}
+                className="w-full py-4 bg-white text-slate-500 font-bold rounded-2xl border border-slate-200 flex items-center justify-center transition-colors hover:bg-slate-50"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

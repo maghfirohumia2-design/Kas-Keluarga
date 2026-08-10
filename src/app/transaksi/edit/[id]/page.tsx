@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Upload, Loader2, Receipt } from "lucide-react";
 import Link from "next/link";
 
-export default function EditTransaksi({ params }: { params: Promise<{ id: string }> }) {
+function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
   const { id } = use(params);
   
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -81,7 +83,11 @@ export default function EditTransaksi({ params }: { params: Promise<{ id: string
 
       if (error) throw error;
 
-      router.push("/transaksi");
+      if (returnTo) {
+        router.push(returnTo);
+      } else {
+        router.push("/transaksi");
+      }
       router.refresh();
     } catch (error) {
       console.error("Gagal mengupdate transaksi:", error);
@@ -231,5 +237,13 @@ export default function EditTransaksi({ params }: { params: Promise<{ id: string
         </button>
       </form>
     </main>
+  );
+}
+
+export default function EditTransaksiPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Memuat...</div>}>
+      <EditTransaksiContent params={params} />
+    </Suspense>
   );
 }
