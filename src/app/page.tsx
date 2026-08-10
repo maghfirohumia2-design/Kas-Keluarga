@@ -26,16 +26,27 @@ const getIconForAccount = (name: string) => {
   return <CircleDollarSign size={32} />;
 };
 
-// Fungsi warna gradien per kas
-const getGradientForAccount = (index: number) => {
-  const gradients = [
-    "from-emerald-500 to-teal-500 text-white", // Default / Keluarga
-    "from-blue-500 to-indigo-500 text-white", // Kantor
-    "from-orange-400 to-red-500 text-white", // Sekolah
-    "from-purple-500 to-pink-500 text-white", // Lain-lain
-    "from-amber-500 to-orange-600 text-white"
-  ];
-  return gradients[index % gradients.length];
+// Fungsi warna icon per kas
+const getColorClassesForAccount = (name: string) => {
+  if (!name) return "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 group-hover:text-emerald-700 border-emerald-100/50";
+  const lowerName = name.toLowerCase();
+  
+  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) 
+    return "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 group-hover:text-emerald-700 border-emerald-100/50";
+    
+  if (lowerName.includes("kantor") || lowerName.includes("psv") || lowerName.includes("kerja") || lowerName.includes("spv") || lowerName.includes("it")) 
+    return "bg-blue-50 text-blue-600 group-hover:bg-blue-100 group-hover:text-blue-700 border-blue-100/50";
+    
+  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah")) 
+    return "bg-orange-50 text-orange-600 group-hover:bg-orange-100 group-hover:text-orange-700 border-orange-100/50";
+    
+  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) 
+    return "bg-purple-50 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700 border-purple-100/50";
+    
+  if (lowerName.includes("belanja") || lowerName.includes("toko")) 
+    return "bg-pink-50 text-pink-600 group-hover:bg-pink-100 group-hover:text-pink-700 border-pink-100/50";
+    
+  return "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-700 border-slate-200/50";
 };
 
 export default function Home() {
@@ -141,7 +152,7 @@ export default function Home() {
                   className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
                 >
                   {/* Icon Box */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-emerald-100 transition-colors border border-emerald-100/50 shadow-inner text-emerald-600 group-hover:text-emerald-700">
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 transition-colors border shadow-inner ${getColorClassesForAccount(account.name)}`}>
                     {getIconForAccount(account.name)}
                   </div>
                   
