@@ -423,28 +423,32 @@ export default function ProfilPage() {
       <h3 className="font-semibold text-slate-800 mb-4 ml-2 flex items-center gap-2">
         Manajemen Kas
       </h3>
-      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 mb-8 overflow-hidden">
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setShowAddKas(true)}
-            className="flex-1 py-4 bg-emerald-50 text-emerald-600 font-bold rounded-2xl hover:bg-emerald-100 transition-colors flex flex-col items-center justify-center gap-2 border border-emerald-100"
-          >
-            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-              <Plus size={20} />
-            </div>
-            Tambah Kas
-          </button>
-          
-          <button 
-            onClick={() => setShowDeleteModal(true)}
-            className="flex-1 py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors flex flex-col items-center justify-center gap-2 border border-red-100"
-          >
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <Trash2 size={20} />
-            </div>
-            Hapus Kas
-          </button>
-        </div>
+      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden">
+        <button 
+          onClick={() => setShowAddKas(true)}
+          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left border-b border-slate-50 last:border-0"
+        >
+          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <Plus size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-slate-800 text-sm">Tambah Kas Baru</p>
+            <p className="text-xs text-slate-500">Buat kategori dompet baru</p>
+          </div>
+        </button>
+        
+        <button 
+          onClick={() => setShowDeleteModal(true)}
+          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
+        >
+          <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+            <Trash2 size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-slate-800 text-sm">Hapus Kas</p>
+            <p className="text-xs text-slate-500">Hapus dompet dan riwayatnya</p>
+          </div>
+        </button>
       </div>
 
       {/* Admin Section */}
