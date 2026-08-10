@@ -361,7 +361,22 @@ export default function ProfilPage() {
 
       {/* Profile Card */}
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col items-center mb-8 relative overflow-hidden">
-        <div className="absolute top-0 w-full h-24 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-3xl" />
+        <div className="absolute top-0 w-full h-24 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-3xl flex justify-between items-start p-4">
+          <button 
+            onClick={() => setShowDeleteModal(true)}
+            className="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm"
+          >
+            <Trash2 size={16} />
+            Hapus
+          </button>
+          <button 
+            onClick={() => setShowAddKas(true)}
+            className="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm"
+          >
+            <Plus size={16} />
+            Tambah
+          </button>
+        </div>
         
         <div className="relative mt-8 mb-4 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
           <div className="w-24 h-24 bg-white p-1 rounded-full shadow-lg relative z-10 overflow-hidden">
@@ -427,38 +442,6 @@ export default function ProfilPage() {
         )}
 
 
-      </div>
-
-      {/* Manajemen Kas Section */}
-      <h3 className="font-semibold text-slate-800 mb-4 ml-2 flex items-center gap-2">
-        Manajemen Kas
-      </h3>
-      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden">
-        <button 
-          onClick={() => setShowAddKas(true)}
-          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left border-b border-slate-50 last:border-0"
-        >
-          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <Plus size={20} />
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 text-sm">Tambah Kas Baru</p>
-            <p className="text-xs text-slate-500">Buat kategori dompet baru</p>
-          </div>
-        </button>
-        
-        <button 
-          onClick={() => setShowDeleteModal(true)}
-          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
-        >
-          <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-            <Trash2 size={20} />
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 text-sm">Hapus Kas</p>
-            <p className="text-xs text-slate-500">Hapus dompet dan riwayatnya</p>
-          </div>
-        </button>
       </div>
 
       {/* Admin Section */}
