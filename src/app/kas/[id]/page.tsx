@@ -49,7 +49,6 @@ export default function KasDashboardPage() {
         .from('transactions')
         .select('*')
         .eq('account_id', accountId)
-        .order('date', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (!txError && txData) {
@@ -72,7 +71,7 @@ export default function KasDashboardPage() {
 
   // Kelompokkan transaksi berdasarkan tanggal
   const groupedTransactions = transactions.reduce((groups: any, tx: any) => {
-    const dateStr = new Date(tx.date).toLocaleDateString('id-ID', {
+    const dateStr = new Date(tx.created_at).toLocaleDateString('id-ID', {
       day: 'numeric', month: 'long', year: 'numeric'
     });
     if (!groups[dateStr]) {
