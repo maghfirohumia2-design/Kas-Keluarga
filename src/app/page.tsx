@@ -125,9 +125,13 @@ export default function Home() {
         )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mb-4"></div>
-            <p className="text-sm text-slate-400 font-medium">Memuat Menu...</p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-y-6 gap-x-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex flex-col items-center animate-pulse">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-200 rounded-2xl mb-3"></div>
+                <div className="h-3 w-12 bg-slate-200 rounded"></div>
+              </div>
+            ))}
           </div>
         ) : (
           <>
