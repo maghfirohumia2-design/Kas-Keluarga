@@ -199,20 +199,25 @@ export default function ProfilPage() {
     e.preventDefault();
     setAddUserLoading(true);
     setAddUserMessage(null);
-    const res = await createUserAction(newPhone, newPin, newFullName);
-    if (res.error) {
-      setAddUserMessage({ text: res.error, type: "error" });
-    } else {
-      setAddUserMessage({ text: "Pengguna berhasil ditambahkan!", type: "success" });
-      setTimeout(() => {
-        setShowAddUser(false);
-        setNewPhone("");
-        setNewFullName("");
-        setNewPin("");
-        setAddUserMessage(null);
-      }, 2000);
+    try {
+      const res = await createUserAction(newPhone, newPin, newFullName);
+      if (res.error) {
+        setAddUserMessage({ text: res.error, type: "error" });
+      } else {
+        setAddUserMessage({ text: "Pengguna berhasil ditambahkan!", type: "success" });
+        setTimeout(() => {
+          setShowAddUser(false);
+          setNewPhone("");
+          setNewFullName("");
+          setNewPin("");
+          setAddUserMessage(null);
+        }, 2000);
+      }
+    } catch (err: any) {
+      setAddUserMessage({ text: "Terjadi kesalahan sistem, silahkan coba lagi.", type: "error" });
+    } finally {
+      setAddUserLoading(false);
     }
-    setAddUserLoading(false);
   };
 
   return (

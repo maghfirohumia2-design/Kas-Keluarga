@@ -46,7 +46,7 @@ export async function createUserAction(phone: string, pin: string, fullName: str
       return { error: error.message };
     }
 
-    return { success: true, user: data.user };
+    return { success: true, userId: data.user.id };
   } catch (err: any) {
     console.error("Create user exception:", err);
     return { error: err.message || "Terjadi kesalahan sistem." };
