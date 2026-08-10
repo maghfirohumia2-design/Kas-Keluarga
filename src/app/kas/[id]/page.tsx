@@ -10,7 +10,8 @@ import {
   History,
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -40,6 +41,7 @@ export default function KasDashboardPage() {
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -179,7 +181,7 @@ export default function KasDashboardPage() {
       {/* Saldo Card */}
       <div className="px-6 relative z-10 mt-2 mb-8">
         <div className={`bg-gradient-to-br ${gradient} rounded-[28px] p-5 shadow-xl shadow-emerald-500/20 flex flex-col text-white`}>
-          <div className="flex items-center justify-between w-full mb-5 gap-4">
+          <div className="flex items-center justify-between w-full gap-4">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-inner border border-white/20 shrink-0">
               <Wallet size={24} />
             </div>
@@ -198,7 +200,7 @@ export default function KasDashboardPage() {
 
           {/* Budget Progress (if exists) */}
           {account.budget_limit > 0 && (
-            <div className="w-full bg-white/10 rounded-2xl p-4 mt-2 mb-6">
+            <div className="w-full bg-white/10 rounded-2xl p-4 mt-4">
               <div className="flex justify-between text-xs font-medium text-white/90 mb-2">
                 <span>Pengeluaran Bulan Ini</span>
                 <span>Rp {monthlyExpense.toLocaleString('id-ID')} / Rp {Number(account.budget_limit).toLocaleString('id-ID')}</span>
@@ -213,28 +215,6 @@ export default function KasDashboardPage() {
               </div>
             </div>
           )}
-          
-          <div className="flex justify-between w-full mt-2">
-            <Link 
-              href={`/transaksi/baru?accountId=${accountId}&type=income`}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-sm"
-            >
-              <div className="w-6 h-6 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-sm shrink-0">
-                <TrendingUp size={14} />
-              </div>
-              <span className="text-xs font-bold text-white">Uang Masuk</span>
-            </Link>
-            
-            <Link 
-              href={`/transaksi/baru?accountId=${accountId}&type=expense`}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-sm"
-            >
-              <div className="w-6 h-6 rounded-full bg-white text-red-500 flex items-center justify-center shadow-sm shrink-0">
-                <TrendingDown size={14} />
-              </div>
-              <span className="text-xs font-bold text-white">Uang Keluar</span>
-            </Link>
-          </div>
         </div>
       </div>
 
@@ -406,6 +386,48 @@ export default function KasDashboardPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Floating Action Button (FAB) */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pb-safe">
+        {showFabMenu && (
+          <div className="flex flex-col gap-3 items-end animate-in slide-in-from-bottom-5 fade-in duration-200">
+            <Link 
+              href={`/transaksi/baru?accountId=${accountId}&type=income`}
+              className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+            >
+              <span className="text-sm font-bold text-slate-700">Uang Masuk</span>
+              <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                <TrendingUp size={16} />
+              </div>
+            </Link>
+            <Link 
+              href={`/transaksi/baru?accountId=${accountId}&type=expense`}
+              className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+            >
+              <span className="text-sm font-bold text-slate-700">Uang Keluar</span>
+              <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center border border-red-100">
+                <TrendingDown size={16} />
+              </div>
+            </Link>
+          </div>
+        )}
+        <button
+          onClick={() => setShowFabMenu(!showFabMenu)}
+          className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transition-all duration-300 ${
+            showFabMenu ? "bg-slate-800 rotate-45 shadow-slate-900/20" : "bg-emerald-500 hover:bg-emerald-600 hover:scale-105 shadow-emerald-500/30"
+          }`}
+        >
+          <Plus size={28} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      {/* Overlay for FAB */}
+      {showFabMenu && (
+        <div 
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40" 
+          onClick={() => setShowFabMenu(false)}
+        />
       )}
     </main>
   );
