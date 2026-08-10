@@ -68,7 +68,11 @@ function TransactionFormContent() {
 
       if (error) throw error;
 
-      router.push("/transaksi");
+      if (prefillAccountId) {
+        router.push(`/kas/${prefillAccountId}`);
+      } else {
+        router.push("/");
+      }
       router.refresh();
     } catch (error) {
       console.error("Gagal menyimpan transaksi:", error);
