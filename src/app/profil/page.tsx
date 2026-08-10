@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2 } from "lucide-react";
+import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { createUserAction } from "@/app/actions/admin";
 
 export default function ProfilPage() {
   const [phone, setPhone] = useState<string | null>("Memuat...");
@@ -19,6 +20,15 @@ export default function ProfilPage() {
   const [pin, setPin] = useState<string[]>(["", "", "", "", "", ""]);
   const [pinMessage, setPinMessage] = useState<{text: string, type: "success" | "error"} | null>(null);
   const [loadingPin, setLoadingPin] = useState(false);
+  
+  // State Admin: Tambah Pengguna
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newPhone, setNewPhone] = useState("");
+  const [newFullName, setNewFullName] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserMessage, setAddUserMessage] = useState<{text: string, type: "success" | "error"} | null>(null);
+
   const router = useRouter();
 
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -178,6 +188,27 @@ export default function ProfilPage() {
     }
   };
 
+  // --- Admin: Create User Logic ---
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddUserLoading(true);
+    setAddUserMessage(null);
+    const res = await createUserAction(newPhone, newPin, newFullName);
+    if (res.error) {
+      setAddUserMessage({ text: res.error, type: "error" });
+    } else {
+      setAddUserMessage({ text: "Pengguna berhasil ditambahkan!", type: "success" });
+      setTimeout(() => {
+        setShowAddUser(false);
+        setNewPhone("");
+        setNewFullName("");
+        setNewPin("");
+        setAddUserMessage(null);
+      }, 2000);
+    }
+    setAddUserLoading(false);
+  };
+
   return (
     <main className="p-6 bg-slate-50 min-h-screen pb-24 relative overflow-x-hidden">
       <header className="mb-8 pt-4">
@@ -261,6 +292,26 @@ export default function ProfilPage() {
             <p className="font-bold text-emerald-600">Premium</p>
           </div>
         </div>
+      </div>
+
+      {/* Admin Section */}
+      <h3 className="font-semibold text-slate-800 mb-4 ml-2 flex items-center gap-2">
+        Admin Panel
+        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-full">Pro</span>
+      </h3>
+      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden">
+        <button 
+          onClick={() => setShowAddUser(true)}
+          className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
+        >
+          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Users size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-slate-800 text-sm">Tambah Anggota</p>
+            <p className="text-xs text-slate-500">Buat akun untuk staf atau keluarga</p>
+          </div>
+        </button>
       </div>
 
       {/* Ganti PIN Section */}
@@ -354,7 +405,7 @@ export default function ProfilPage() {
           </div>
           <div className="flex-1">
             <p className="font-semibold text-slate-800 text-sm">Versi Aplikasi</p>
-            <p className="text-xs text-slate-500">v1.3.0 (Profil Custom)</p>
+            <p className="text-xs text-slate-500">v1.4.0 (Admin Panel)</p>
           </div>
         </div>
       </div>
@@ -362,11 +413,81 @@ export default function ProfilPage() {
       {/* Tombol Logout */}
       <button 
         onClick={handleLogout}
-        className="w-full p-4 flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl transition-colors"
+        className="w-full p-4 flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl transition-colors mb-4"
       >
         <LogOut size={20} />
         Keluar Akun (Logout)
       </button>
+
+      {/* Modal Tambah Pengguna Baru */}
+      {showAddUser && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-2">Tambah Anggota</h2>
+            <p className="text-xs text-slate-500 mb-6">Buat akun untuk keluarga atau staf Anda.</p>
+            
+            {addUserMessage && (
+              <div className={`p-3 rounded-xl text-xs font-medium mb-4 ${addUserMessage.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
+                {addUserMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nama Lengkap</label>
+                <input
+                  type="text"
+                  required
+                  value={newFullName}
+                  onChange={(e) => setNewFullName(e.target.value)}
+                  placeholder="Misal: Budi Santoso"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nomor HP</label>
+                <input
+                  type="tel"
+                  required
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Contoh: 081234567890"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-medium tracking-wide"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">PIN Login (6 Digit)</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  required
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Contoh: 123456"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-bold tracking-[0.3em] text-center"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowAddUser(false); setAddUserMessage(null); }}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="submit"
+                  disabled={addUserLoading || newPhone.length < 10 || newPin.length !== 6 || !newFullName}
+                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 flex justify-center items-center"
+                >
+                  {addUserLoading ? <Loader2 className="animate-spin" size={20} /> : "Buat Akun"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
