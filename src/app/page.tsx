@@ -208,7 +208,7 @@ export default function Home() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-y-6 gap-x-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-y-5 gap-x-2">
               {accounts?.map((account) => (
                 <Link 
                   href={`/kas/${account.id}`} 
@@ -216,7 +216,7 @@ export default function Home() {
                   className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
                 >
                   {/* Icon Box */}
-                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 transition-colors border shadow-inner ${getColorClassesForAccount(account.name)}`}>
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-2 transition-colors border shadow-inner ${getColorClassesForAccount(account.name)}`}>
                     {getIconForAccount(account.name)}
                   </div>
                   
@@ -227,7 +227,7 @@ export default function Home() {
                   
                   {/* Budget Progress (if exists) */}
                   {account.budget_limit > 0 && (
-                    <div className="w-14 sm:w-16 mt-2 flex flex-col items-center">
+                    <div className="w-12 sm:w-14 mt-1.5 flex flex-col items-center">
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className={`h-full rounded-full transition-all ${
@@ -250,7 +250,7 @@ export default function Home() {
                 onClick={() => setShowAddKas(true)}
                 className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-emerald-50 transition-colors border border-dashed border-slate-300 shadow-inner text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-200">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-2 group-hover:bg-emerald-50 transition-colors border border-dashed border-slate-300 shadow-inner text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-200">
                   <Plus size={28} />
                 </div>
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 group-hover:text-emerald-600 text-center uppercase tracking-wide px-1">
