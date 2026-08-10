@@ -24,7 +24,7 @@ const getIconForAccount = (name: string) => {
   if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return <Monitor size={32} />;
   if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) return <ClipboardList size={32} />;
   if (lowerName.includes("kantor") || lowerName.includes("kerja")) return <Briefcase size={32} />;
-  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah")) return <GraduationCap size={32} />;
+  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return <GraduationCap size={32} />;
   if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return <Car size={32} />;
   if (lowerName.includes("belanja") || lowerName.includes("toko")) return <ShoppingBag size={32} />;
   return <CircleDollarSign size={32} />;
@@ -47,7 +47,7 @@ const getColorClassesForAccount = (name: string) => {
   if (lowerName.includes("kantor") || lowerName.includes("kerja")) 
     return "bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100 group-hover:text-cyan-700 border-cyan-100/50";
     
-  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah")) 
+  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) 
     return "bg-orange-50 text-orange-600 group-hover:bg-orange-100 group-hover:text-orange-700 border-orange-100/50";
     
   if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) 
