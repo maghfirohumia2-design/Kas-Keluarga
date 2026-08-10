@@ -345,8 +345,18 @@ export default function ProfilPage() {
 
   return (
     <main className="p-6 bg-slate-50 min-h-screen pb-24 relative overflow-x-hidden">
-      <header className="mb-8 pt-4">
+      <header className="mb-8 pt-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-800">Profil Akun</h1>
+        <button 
+          onClick={() => {
+            setIsChangingPin(true);
+            setTimeout(() => pinInputRefs.current[0]?.focus(), 100);
+          }}
+          className="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-purple-100 transition-colors border border-purple-100 shadow-sm"
+        >
+          <KeyRound size={14} />
+          Ubah PIN
+        </button>
       </header>
 
       {/* Profile Card */}
@@ -469,86 +479,6 @@ export default function ProfilPage() {
             <p className="text-xs text-slate-500">Buat akun untuk staf atau keluarga</p>
           </div>
         </button>
-      </div>
-
-      {/* Ganti PIN Section */}
-      <h3 className="font-semibold text-slate-800 mb-4 ml-2">Keamanan</h3>
-      <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 mb-8 overflow-hidden transition-all">
-        {!isChangingPin ? (
-          <button 
-            onClick={() => {
-              setIsChangingPin(true);
-              setTimeout(() => pinInputRefs.current[0]?.focus(), 100);
-            }}
-            className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left"
-          >
-            <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <KeyRound size={20} />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-slate-800 text-sm">Ubah PIN Rahasia</p>
-              <p className="text-xs text-slate-500">Ganti PIN login Anda</p>
-            </div>
-          </button>
-        ) : (
-          <div className="p-4 bg-purple-50/50 rounded-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <p className="font-bold text-slate-800 text-sm">
-                  {pinStep === "old" ? "Masukkan PIN Lama" : "Masukkan PIN Baru"}
-                </p>
-                <p className="text-[10px] text-slate-500">
-                  {pinStep === "old" ? "Verifikasi keamanan" : "Ketik 6 digit PIN pengganti"}
-                </p>
-              </div>
-              <button 
-                onClick={() => {
-                  setIsChangingPin(false);
-                  setPin(["", "", "", "", "", ""]);
-                  setOldPin(["", "", "", "", "", ""]);
-                  setPinStep("old");
-                  setPinMessage(null);
-                }}
-                className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {pinMessage && (
-              <div className={`p-3 rounded-xl text-xs font-medium mb-4 ${pinMessage.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
-                {pinMessage.text}
-              </div>
-            )}
-            
-            <div 
-              className="flex justify-between gap-1.5 mb-2"
-              onPaste={handlePaste}
-            >
-              {(pinStep === "old" ? oldPin : pin).map((digit, idx) => (
-                <input
-                  key={idx}
-                  ref={(el) => { pinInputRefs.current[idx] = el; }}
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handlePinChange(idx, e.target.value)}
-                  onKeyDown={(e) => handlePinKeyDown(idx, e)}
-                  disabled={loadingPin}
-                  className="w-full aspect-square text-center text-xl font-bold bg-white border border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-slate-800"
-                />
-              ))}
-            </div>
-
-            {loadingPin && (
-              <div className="flex items-center justify-center text-purple-600 gap-2 mt-4 mb-2 animate-pulse">
-                <Loader2 className="animate-spin" size={16} />
-                <span className="text-xs font-semibold">Menyimpan...</span>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <h3 className="font-semibold text-slate-800 mb-4 ml-2">Lainnya</h3>
@@ -763,6 +693,69 @@ export default function ProfilPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Ubah PIN */}
+      {isChangingPin && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {pinStep === "old" ? "Masukkan PIN Lama" : "Buat PIN Baru"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  {pinStep === "old" ? "Verifikasi keamanan sebelum mengubah PIN" : "Ketik 6 digit PIN pengganti yang baru"}
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsChangingPin(false);
+                  setPin(["", "", "", "", "", ""]);
+                  setOldPin(["", "", "", "", "", ""]);
+                  setPinStep("old");
+                  setPinMessage(null);
+                }}
+                className="w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {pinMessage && (
+              <div className={`p-3 rounded-xl text-xs font-medium mb-4 ${pinMessage.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
+                {pinMessage.text}
+              </div>
+            )}
+            
+            <div 
+              className="flex justify-between gap-2 mb-4"
+              onPaste={handlePaste}
+            >
+              {(pinStep === "old" ? oldPin : pin).map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => { pinInputRefs.current[idx] = el; }}
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handlePinChange(idx, e.target.value)}
+                  onKeyDown={(e) => handlePinKeyDown(idx, e)}
+                  disabled={loadingPin}
+                  className="w-full aspect-square text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:bg-white transition-all text-slate-800"
+                />
+              ))}
+            </div>
+
+            {loadingPin && (
+              <div className="flex items-center justify-center text-purple-600 gap-2 mt-4 animate-pulse">
+                <Loader2 className="animate-spin" size={16} />
+                <span className="text-xs font-semibold">Memverifikasi...</span>
+              </div>
+            )}
           </div>
         </div>
       )}
