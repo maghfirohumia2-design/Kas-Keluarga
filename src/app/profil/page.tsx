@@ -17,7 +17,9 @@ export default function ProfilPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const [isChangingPin, setIsChangingPin] = useState(false);
+  const [pinStep, setPinStep] = useState<"old" | "new">("old");
   const [pin, setPin] = useState<string[]>(["", "", "", "", "", ""]);
+  const [oldPin, setOldPin] = useState<string[]>(["", "", "", "", "", ""]);
   const [pinMessage, setPinMessage] = useState<{text: string, type: "success" | "error"} | null>(null);
   const [loadingPin, setLoadingPin] = useState(false);
   
@@ -121,34 +123,60 @@ export default function ProfilPage() {
     const val = value.replace(/\D/g, "").slice(-1);
     
     if (val) {
-      const newPin = [...pin];
-      newPin[index] = val;
-      setPin(newPin);
-
-      if (index < 5) {
-        pinInputRefs.current[index + 1]?.focus();
+      if (pinStep === "old") {
+        const newPin = [...oldPin];
+        newPin[index] = val;
+        setOldPin(newPin);
+        if (index < 5) pinInputRefs.current[index + 1]?.focus();
+        else if (newPin.join("").length === 6) verifyOldPin(newPin.join(""));
       } else {
-        const fullPin = newPin.join("");
-        if (fullPin.length === 6) {
-          executeChangePin(fullPin);
-        }
+        const newPin = [...pin];
+        newPin[index] = val;
+        setPin(newPin);
+        if (index < 5) pinInputRefs.current[index + 1]?.focus();
+        else if (newPin.join("").length === 6) executeChangePin(newPin.join(""));
       }
     }
   };
 
   const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace") {
-      const newPin = [...pin];
-      if (pin[index] === "") {
+      const activeArr = pinStep === "old" ? oldPin : pin;
+      const setter = pinStep === "old" ? setOldPin : setPin;
+      
+      const newPin = [...activeArr];
+      if (activeArr[index] === "") {
         if (index > 0) {
           newPin[index - 1] = "";
-          setPin(newPin);
+          setter(newPin);
           pinInputRefs.current[index - 1]?.focus();
         }
       } else {
         newPin[index] = "";
-        setPin(newPin);
+        setter(newPin);
       }
+    }
+  };
+
+  const verifyOldPin = async (fullPin: string) => {
+    setLoadingPin(true);
+    setPinMessage(null);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: `hp_${phone}@kaskeluarga.com`,
+        password: fullPin,
+      });
+      if (error) throw error;
+      
+      setPinStep("new");
+      setPinMessage(null);
+      setTimeout(() => pinInputRefs.current[0]?.focus(), 100);
+    } catch (error: any) {
+      setOldPin(["", "", "", "", "", ""]);
+      pinInputRefs.current[0]?.focus();
+      setPinMessage({ text: "PIN lama tidak sesuai.", type: "error" });
+    } finally {
+      setLoadingPin(false);
     }
   };
 
@@ -156,15 +184,17 @@ export default function ProfilPage() {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (pastedData.length > 0) {
-      const newPin = [...pin];
+      const setter = pinStep === "old" ? setOldPin : setPin;
+      const newPin = ["", "", "", "", "", ""];
       for (let i = 0; i < pastedData.length; i++) {
         newPin[i] = pastedData[i];
       }
-      setPin(newPin);
+      setter(newPin);
       
       if (pastedData.length === 6) {
         pinInputRefs.current[5]?.focus();
-        executeChangePin(pastedData);
+        if (pinStep === "old") verifyOldPin(pastedData);
+        else executeChangePin(pastedData);
       } else {
         pinInputRefs.current[pastedData.length]?.focus();
       }
@@ -183,6 +213,8 @@ export default function ProfilPage() {
       setTimeout(() => {
         setIsChangingPin(false);
         setPin(["", "", "", "", "", ""]);
+        setOldPin(["", "", "", "", "", ""]);
+        setPinStep("old");
         setPinMessage(null);
       }, 2000);
     } catch (error: any) {
@@ -339,13 +371,19 @@ export default function ProfilPage() {
           <div className="p-4 bg-purple-50/50 rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <p className="font-bold text-slate-800 text-sm">Masukkan PIN Baru</p>
-                <p className="text-[10px] text-slate-500">Ketik 6 digit PIN pengganti</p>
+                <p className="font-bold text-slate-800 text-sm">
+                  {pinStep === "old" ? "Masukkan PIN Lama" : "Masukkan PIN Baru"}
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {pinStep === "old" ? "Verifikasi keamanan" : "Ketik 6 digit PIN pengganti"}
+                </p>
               </div>
               <button 
                 onClick={() => {
                   setIsChangingPin(false);
                   setPin(["", "", "", "", "", ""]);
+                  setOldPin(["", "", "", "", "", ""]);
+                  setPinStep("old");
                   setPinMessage(null);
                 }}
                 className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm"
@@ -364,7 +402,7 @@ export default function ProfilPage() {
               className="flex justify-between gap-1.5 mb-2"
               onPaste={handlePaste}
             >
-              {pin.map((digit, idx) => (
+              {(pinStep === "old" ? oldPin : pin).map((digit, idx) => (
                 <input
                   key={idx}
                   ref={(el) => { pinInputRefs.current[idx] = el; }}
