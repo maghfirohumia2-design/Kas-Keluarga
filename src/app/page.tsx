@@ -181,12 +181,12 @@ export default function Home() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-y-5 gap-x-2">
+            <div className="flex flex-wrap justify-center gap-y-6 gap-x-4 sm:gap-x-6">
               {accounts?.map((account) => (
                 <Link 
                   href={`/kas/${account.id}`} 
                   key={account.id} 
-                  className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform"
+                  className="group flex flex-col items-center justify-start cursor-pointer active:scale-95 transition-transform w-[72px] sm:w-[84px]"
                 >
                   {/* Icon Box */}
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] flex items-center justify-center mb-2 shadow-sm bg-white p-1 border border-slate-100/80 group-hover:shadow-md group-hover:border-slate-200 transition-all">
