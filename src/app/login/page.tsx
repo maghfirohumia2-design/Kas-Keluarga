@@ -131,23 +131,31 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col justify-center p-6 relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-900">
+    <main className="min-h-[100dvh] flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-900">
       {/* Background Decoration */}
       <div className="absolute inset-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 pointer-events-none mix-blend-overlay" />
 
-      <div className="bg-white p-8 rounded-3xl shadow-2xl shadow-emerald-900/50 border border-white/20 max-w-sm w-full mx-auto relative z-10 transition-all duration-300">
+      {/* Top Brand Area */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="w-24 h-24 bg-white text-emerald-600 rounded-[32px] flex items-center justify-center mb-6 shadow-xl rotate-3">
+          <Wallet size={48} strokeWidth={2.5} />
+        </div>
+        <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
+          Kas Digital
+        </h1>
+        <p className="text-emerald-100 mt-2 font-medium drop-shadow-sm text-center">
+          Manajemen Kas Keluarga & Lembaga
+        </p>
+      </div>
+
+      {/* Bottom Sheet Drawer */}
+      <div className="bg-white px-8 pt-6 pb-12 rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.2)] w-full max-w-md mx-auto relative z-10">
+        <div className="w-16 h-1.5 bg-slate-200 rounded-full mx-auto mb-8" />
         
         {step === 1 ? (
           // ================= STEP 1: NOMOR HP =================
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="flex items-center gap-3.5 mb-8">
-              <div className="w-[52px] h-[52px] bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-[16px] flex items-center justify-center shadow-[0_4px_20px_rgb(16,185,129,0.3)] border-2 border-emerald-50 shrink-0">
-                <Wallet size={28} strokeWidth={2.5} className="drop-shadow-sm" />
-              </div>
-              <h1 className="text-[22px] font-bold text-slate-700 tracking-wide">
-                Kas Digital
-              </h1>
-            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">Masuk atau Daftar</h2>
 
             {message && (
               <div className={`p-3 rounded-xl text-sm font-medium mb-6 ${message.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
@@ -156,25 +164,22 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nomor WhatsApp / HP</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Contoh: 081234567890"
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium transition-all text-slate-800 text-lg tracking-wide"
-                  />
-                </div>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="0812-3456-7890"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400 text-slate-800 text-xl font-bold tracking-wide transition-all"
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={phone.length < 10}
-                className="w-full py-4 mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Lanjut
               </button>
@@ -184,24 +189,25 @@ export default function LoginPage() {
               Hubungi Admin untuk mendaftarkan akun baru.
             </div>
           </div>
-
         ) : (
           
           // ================= STEP 2: MASUKKAN PIN =================
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <button 
-              onClick={() => { setStep(1); setMessage(null); setPin(["", "", "", "", "", ""]); }}
-              className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-6 hover:bg-slate-100 transition-colors"
-            >
-              <ArrowLeft size={20} />
-            </button>
+            <div className="flex items-center mb-6">
+              <button 
+                onClick={() => { setStep(1); setMessage(null); setPin(["", "", "", "", "", ""]); }}
+                className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors mr-4"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h2 className="text-2xl font-bold text-slate-800">
+                Masukkan PIN
+              </h2>
+            </div>
             
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">
-              Masukkan PIN
-            </h1>
             <p className="text-sm text-slate-500 mb-8 leading-relaxed">
               Ketik 6 digit PIN rahasia Anda untuk nomor <br/>
-              <strong className="text-slate-800 tracking-wider">
+              <strong className="text-slate-800 tracking-wider font-bold">
                 {phone.replace(/(\d{4})(\d{4})(\d+)/, "$1-$2-$3")}
               </strong>
             </p>
