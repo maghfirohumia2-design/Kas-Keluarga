@@ -141,11 +141,11 @@ export default function LoginPage() {
         {step === 1 ? (
           // ================= STEP 1: NOMOR HP =================
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-emerald-300 to-teal-500 text-white rounded-[24px] flex items-center justify-center mb-4 shadow-[0_8px_30px_rgb(16,185,129,0.4)] border-[3px] border-emerald-50">
-                <Wallet size={36} strokeWidth={2.5} className="drop-shadow-md" />
+            <div className="flex items-center gap-3.5 mb-8">
+              <div className="w-[52px] h-[52px] bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-[16px] flex items-center justify-center shadow-[0_4px_20px_rgb(16,185,129,0.3)] border-2 border-emerald-50 shrink-0">
+                <Wallet size={28} strokeWidth={2.5} className="drop-shadow-sm" />
               </div>
-              <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+              <h1 className="text-[22px] font-bold text-slate-700 tracking-wide">
                 Kas Digital
               </h1>
             </div>
