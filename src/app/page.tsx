@@ -9,7 +9,7 @@ import {
   GraduationCap, 
   Car,
   ShoppingBag,
-  CircleDollarSign,
+  Coins,
   Monitor,
   ClipboardList,
   ArrowRight
@@ -27,7 +27,7 @@ const getIconForAccount = (name: string) => {
   if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return <GraduationCap size={32} />;
   if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return <Car size={32} />;
   if (lowerName.includes("belanja") || lowerName.includes("toko")) return <ShoppingBag size={32} />;
-  return <CircleDollarSign size={32} />;
+  return <Coins size={32} />;
 };
 
 // Fungsi warna icon per kas
