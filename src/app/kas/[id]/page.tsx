@@ -41,8 +41,9 @@ export default function KasDashboardPage() {
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
-  const [filterMonth, setFilterMonth] = useState("");
+  const [filterDate, setFilterDate] = useState("");
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -124,8 +125,8 @@ export default function KasDashboardPage() {
   };
 
   // Filter transaksi
-  const filteredTxList = filterMonth 
-    ? transactions.filter(tx => tx.created_at.startsWith(filterMonth))
+  const filteredTxList = filterDate 
+    ? transactions.filter(tx => tx.created_at.startsWith(filterDate))
     : transactions;
 
   // Kelompokkan transaksi berdasarkan tanggal
@@ -232,10 +233,10 @@ export default function KasDashboardPage() {
             Riwayat
           </h3>
           <input 
-            type="month" 
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(e.target.value)}
-            className="text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm"
+            type="date" 
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm w-32"
           />
         </div>
 
@@ -250,26 +251,26 @@ export default function KasDashboardPage() {
                   <div 
                     key={tx.id} 
                     onClick={() => setSelectedTx(tx)}
-                    className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer"
+                    className="bg-white px-3 py-2.5 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-emerald-200 transition-colors cursor-pointer"
                   >
-                    <div className="flex gap-2.5">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-inner border ${
+                    <div className="flex gap-2.5 items-center">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-inner border ${
                         tx.type === 'income' 
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors' 
                           : 'bg-red-50 text-red-500 border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors'
                       }`}>
-                        {tx.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                        {tx.type === 'income' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-800 text-sm line-clamp-1">{tx.description}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-xs text-slate-400 font-medium">
+                        <p className="font-bold text-slate-800 text-[13px] line-clamp-1">{tx.description}</p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-slate-400 font-medium">
                             {new Date(tx.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           {tx.user_name && (
                             <>
-                              <span className="text-[10px] text-slate-300">•</span>
-                              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-sm flex items-center gap-0.5">
+                              <span className="text-[9px] text-slate-300">•</span>
+                              <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-sm flex items-center gap-0.5">
                                 👤 {tx.user_name}
                               </span>
                             </>
@@ -278,11 +279,11 @@ export default function KasDashboardPage() {
                       </div>
                     </div>
                     <div className="text-right shrink-0 ml-2">
-                      <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                      <p className={`font-bold text-[13px] ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                         {tx.type === 'income' ? '+' : '-'}Rp {Number(tx.amount).toLocaleString('id-ID')}
                       </p>
                       {tx.receipt_url && (
-                        <span className="inline-block mt-1 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-semibold border border-slate-200">
+                        <span className="inline-block mt-0.5 text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-semibold border border-slate-200">
                           Ada Nota
                         </span>
                       )}
