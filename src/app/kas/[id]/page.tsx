@@ -238,19 +238,19 @@ export default function KasDashboardPage() {
             <span className="hidden sm:inline">Riwayat</span>
           </h3>
           <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 w-full max-w-[280px]">
               <input 
                 type="date" 
                 value={filterStartDate}
                 onChange={(e) => setFilterStartDate(e.target.value)}
-                className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
+                className="flex-1 min-w-0 text-[11px] sm:text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
-              <span className="text-[9px] text-slate-400 font-black uppercase">s/d</span>
+              <span className="text-[9px] text-slate-400 font-black uppercase shrink-0">s/d</span>
               <input 
                 type="date" 
                 value={filterEndDate}
                 onChange={(e) => setFilterEndDate(e.target.value)}
-                className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-1.5 py-1 focus:outline-none focus:border-emerald-500 shadow-sm w-[90px] sm:w-[110px]"
+                className="flex-1 min-w-0 text-[11px] sm:text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
             </div>
             {filterStartDate && filterEndDate && filterStartDate > filterEndDate && (
