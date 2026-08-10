@@ -190,7 +190,7 @@ export default function LoginPage() {
         {step === 1 ? (
           // ================= STEP 1: NOMOR HP =================
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6">Masuk atau Daftar</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">Login</h2>
 
             {message && (
               <div className={`p-3 rounded-xl text-sm font-medium mb-6 ${message.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
