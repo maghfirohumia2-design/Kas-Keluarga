@@ -123,8 +123,8 @@ export default function Home() {
   return (
     <main className="p-6 pb-24 relative min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-[340px] bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 rounded-b-[48px] -z-10 shadow-[0_10px_40px_rgba(16,185,129,0.3)]" />
-      <div className="absolute top-0 left-0 w-full h-[340px] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 rounded-b-[48px] -z-10" />
+      <div className="absolute top-0 left-0 w-full h-[340px] bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 rounded-b-[48px] z-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)]" />
+      <div className="absolute top-0 left-0 w-full h-[340px] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 rounded-b-[48px] z-0" />
 
       {/* Header Profile */}
       <header className="mb-8 pt-6 flex justify-between items-center relative z-10">
