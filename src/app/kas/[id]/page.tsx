@@ -232,38 +232,46 @@ export default function KasDashboardPage() {
 
       {/* Riwayat Khusus */}
       <div className="px-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-800 flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
             <History size={18} className="text-emerald-500" />
-            <span className="hidden sm:inline">Riwayat</span>
+            <span>Riwayat</span>
           </h3>
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-1.5 w-full max-w-[280px]">
+        </div>
+
+        {/* Filter Tanggal */}
+        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dari</label>
               <input 
                 type="date" 
                 value={filterStartDate}
                 onChange={(e) => setFilterStartDate(e.target.value)}
-                className="flex-1 min-w-0 text-[11px] sm:text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm"
+                className="w-full text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-300"
               />
-              <span className="text-[9px] text-slate-400 font-black uppercase shrink-0">s/d</span>
+            </div>
+            <span className="text-slate-400 font-black text-sm mt-4">→</span>
+            <div className="flex-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sampai</label>
               <input 
                 type="date" 
                 value={filterEndDate}
                 onChange={(e) => setFilterEndDate(e.target.value)}
-                className="flex-1 min-w-0 text-[11px] sm:text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-emerald-500 shadow-sm"
+                className="w-full text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-300"
               />
             </div>
-            {filterStartDate && filterEndDate && filterStartDate > filterEndDate && (
-              <span className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-100">
-                ⚠️ Pilih rentang tanggal yang benar
-              </span>
-            )}
-            {((filterStartDate && !filterEndDate) || (!filterStartDate && filterEndDate)) && (
-              <span className="text-[9px] text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
-                ⏳ Lengkapi kedua tanggal untuk mencari
-              </span>
-            )}
           </div>
+          {filterStartDate && filterEndDate && filterStartDate > filterEndDate && (
+            <p className="text-[9px] text-red-500 font-bold mt-2 bg-red-50 px-2 py-1 rounded">
+              ⚠️ Pilih rentang tanggal yang benar
+            </p>
+          )}
+          {((filterStartDate && !filterEndDate) || (!filterStartDate && filterEndDate)) && (
+            <p className="text-[9px] text-amber-500 font-bold mt-2 bg-amber-50 px-2 py-1 rounded">
+              ⏳ Lengkapi kedua tanggal untuk mencari
+            </p>
+          )}
         </div>
 
         <div className="space-y-5">
