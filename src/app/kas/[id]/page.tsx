@@ -44,21 +44,7 @@ export default function KasDashboardPage() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
-  // DD/MM/YYYY raw inputs
-  const [startDD, setStartDD] = useState("");
-  const [startMM, setStartMM] = useState("");
-  const [startYY, setStartYY] = useState("");
-  const [endDD, setEndDD] = useState("");
-  const [endMM, setEndMM] = useState("");
-  const [endYY, setEndYY] = useState("");
-
-  // Convert DD/MM/YYYY parts to YYYY-MM-DD for filtering
-  const buildDate = (dd: string, mm: string, yy: string) => {
-    if (dd.length === 2 && mm.length === 2 && yy.length === 4) {
-      return `${yy}-${mm}-${dd}`;
-    }
-    return "";
-  };
+  
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -257,52 +243,24 @@ export default function KasDashboardPage() {
         {/* Filter Tanggal */}
         <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
           <div className="flex items-center gap-2">
-            {/* Start Date */}
             <div className="flex-1">
               <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dari</label>
-              <div className="flex items-center gap-1">
-                <input type="text" inputMode="numeric" maxLength={2} value={startDD}
-                  onChange={(e) => { const v = e.target.value.replace(/\D/g,''); setStartDD(v); setFilterStartDate(buildDate(v.padStart(2,'0'), startMM.padStart(2,'0'), startYY)); }}
-                  placeholder="DD"
-                  className="w-[30px] text-center text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-2 focus:outline-none focus:border-emerald-500"
-                />
-                <span className="text-slate-300 text-xs">/</span>
-                <input type="text" inputMode="numeric" maxLength={2} value={startMM}
-                  onChange={(e) => { const v = e.target.value.replace(/\D/g,''); setStartMM(v); setFilterStartDate(buildDate(startDD.padStart(2,'0'), v.padStart(2,'0'), startYY)); }}
-                  placeholder="MM"
-                  className="w-[30px] text-center text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-2 focus:outline-none focus:border-emerald-500"
-                />
-                <span className="text-slate-300 text-xs">/</span>
-                <input type="text" inputMode="numeric" maxLength={4} value={startYY}
-                  onChange={(e) => { const v = e.target.value.replace(/\D/g,''); setStartYY(v); setFilterStartDate(buildDate(startDD.padStart(2,'0'), startMM.padStart(2,'0'), v)); }}
-                  placeholder="YYYY"
-                  className="w-[44px] text-center text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-2 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
+              <input 
+                type="date" 
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+                className="w-full text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-300"
+              />
             </div>
             <span className="text-slate-400 font-black text-sm mt-4">→</span>
-            {/* End Date */}
             <div className="flex-1">
               <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sampai</label>
-              <div className="flex items-center gap-1">
-                <input type="text" inputMode="numeric" maxLength={2} value={endDD}
-                  onChange={(e) => { const v = e.target.value.replace(/\D/g,''); setEndDD(v); setFilterEndDate(buildDate(v.padStart(2,'0'), endMM.padStart(2,'0'), endYY)); }}
-                  placeholder="DD"
-                  className="w-[30px] text-center text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-2 focus:outline-none focus:border-emerald-500"
-                />
-                <span className="text-slate-300 text-xs">/</span>
-                <input type="text" inputMode="numeric" maxLength={2} value={endMM}
-                  onChange={(e) => { const v = e.target.value.replace(/\D/g,''); setEndMM(v); setFilterEndDate(buildDate(endDD.padStart(2,'0'), v.padStart(2,'0'), endYY)); }}
-                  placeholder="MM"
-                  className="w-[30px] text-center text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-2 focus:outline-none focus:border-emerald-500"
-                />
-                <span className="text-slate-300 text-xs">/</span>
-                <input type="text" inputMode="numeric" maxLength={4} value={endYY}
-                  onChange={(e) => { const v = e.target.value.replace(/\D/g,''); setEndYY(v); setFilterEndDate(buildDate(endDD.padStart(2,'0'), endMM.padStart(2,'0'), v)); }}
-                  placeholder="YYYY"
-                  className="w-[44px] text-center text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-2 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
+              <input 
+                type="date" 
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+                className="w-full text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-300"
+              />
             </div>
           </div>
           {filterStartDate && filterEndDate && filterStartDate > filterEndDate && (
@@ -310,9 +268,9 @@ export default function KasDashboardPage() {
               ⚠️ Pilih rentang tanggal yang benar
             </p>
           )}
-          {((startDD || startMM || startYY) && !filterStartDate || (endDD || endMM || endYY) && !filterEndDate) && (
+          {((filterStartDate && !filterEndDate) || (!filterStartDate && filterEndDate)) && (
             <p className="text-[9px] text-amber-500 font-bold mt-2 bg-amber-50 px-2 py-1 rounded">
-              ⏳ Lengkapi DD/MM/YYYY
+              ⏳ Lengkapi kedua tanggal untuk mencari
             </p>
           )}
         </div>
