@@ -141,28 +141,31 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="p-6 pb-24 relative min-h-screen bg-slate-50 overflow-x-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-[340px] bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 rounded-b-[48px] z-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)]" />
-      <div className="absolute top-0 left-0 w-full h-[340px] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 rounded-b-[48px] z-0" />
-
-      {/* Header Profile */}
-      <header className="mb-8 pt-6 flex justify-between items-center relative z-10">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">{fullName}</h1>
-          <p className="text-sm text-emerald-50 font-medium opacity-90">Selalu Sehat dan Bahagia</p>
+    <main className="min-h-screen bg-slate-50 overflow-x-hidden">
+      {/* Full-width hero header */}
+      <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 pb-24 pt-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)] relative">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+        <div className="max-w-6xl mx-auto px-6 pt-8 relative z-10">
+          {/* Header Profile */}
+          <header className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight">{fullName}</h1>
+              <p className="text-sm text-emerald-50 font-medium opacity-90">Selalu Sehat dan Bahagia</p>
+            </div>
+            <Link href="/profil" className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-xl shadow-lg border-[3px] border-emerald-300/50 overflow-hidden relative transition-transform hover:scale-105 active:scale-95">
+              {avatarUrl ? (
+                <Image src={avatarUrl} alt="Profil" fill className="object-cover" />
+              ) : (
+                "👨‍👩‍👧"
+              )}
+            </Link>
+          </header>
         </div>
-        <Link href="/profil" className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-xl shadow-lg border-[3px] border-emerald-300/50 overflow-hidden relative transition-transform hover:scale-105 active:scale-95">
-          {avatarUrl ? (
-            <Image src={avatarUrl} alt="Profil" fill className="object-cover" />
-          ) : (
-            "👨‍👩‍👧"
-          )}
-        </Link>
-      </header>
+      </div>
 
-      {/* Grid Menu Kas (Gaya Icon Shopee) */}
-      <div className="bg-white/95 backdrop-blur-2xl rounded-[32px] p-6 shadow-xl shadow-slate-200/50 border border-white/50 min-h-[200px] relative z-10 mt-2">
+      {/* Content pulled up over hero */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-16 pb-28 relative z-10">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-[32px] p-6 shadow-xl shadow-slate-200/50 border border-white/50 min-h-[200px]">
         {accountsError && (
           <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 mb-4">
             Gagal mengambil data dari database. Pastikan koneksi aman.
@@ -181,7 +184,7 @@ export default function Home() {
           </div>
         ) : (
           <>
-            <div className="flex flex-wrap justify-center gap-y-6 gap-x-4 sm:gap-x-6">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4 sm:gap-6">
               {accounts?.map((account) => (
                 <Link 
                   href={`/kas/${account.id}`} 
@@ -230,6 +233,7 @@ export default function Home() {
             )}
           </>
         )}
+        </div>
       </div>
     </main>
   );

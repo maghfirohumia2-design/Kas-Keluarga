@@ -14,26 +14,12 @@ body {
   min-height: 100vh;
 }
 
-/* Subtle pattern overlay on desktop background */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(255,255,0,0.05) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 50%, rgba(16,185,129,0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Mobile container for desktop view to keep app looking like a mobile app */
+/* Mobile container - full screen on all devices */
 .mobile-container {
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: 100%;
+  width: 100%;
   min-height: 100vh;
   background-color: var(--color-surface);
-  box-shadow: 0 0 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.05);
   position: relative;
   overflow-x: hidden;
-  z-index: 1;
 }
