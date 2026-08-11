@@ -160,7 +160,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Full-width hero header */}
-      <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 pb-16 pt-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)] relative">
+      <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 pb-20 pt-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)] relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="max-w-6xl mx-auto px-6 pt-8 relative z-10">
           {/* Header Profile */}
@@ -181,53 +181,7 @@ export default function Home() {
       </div>
 
       {/* Main Content Container */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-10 pb-28 relative z-10 space-y-6">
-        {/* Ringkasan Bulanan & Total Saldo Card */}
-        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 rounded-[28px] p-5 shadow-xl text-white border border-slate-700/50">
-          <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Total Saldo Gabungan</p>
-              <h2 className="text-2xl font-black tracking-tight text-white mt-0.5">
-                {showTotal ? `Rp ${totalBalance.toLocaleString('id-ID')}` : 'Rp •••••••••'}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setShowTotal(!showTotal)} 
-                className="p-2.5 hover:bg-white/20 rounded-xl transition-colors bg-white/10 text-white"
-                title="Tampilkan / Sembunyikan Saldo"
-              >
-                {showTotal ? <Eye size={18} /> : <EyeOff size={18} />}
-              </button>
-              <Link 
-                href="/transaksi/transfer" 
-                className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-emerald-900/40 transition-colors"
-              >
-                <ArrowLeftRight size={15} />
-                <span>Transfer Kas</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Sub Summary Grid */}
-          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-700/60 text-center">
-            <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-              <p className="text-[9px] uppercase font-bold text-emerald-400">Masuk Bulan Ini</p>
-              <p className="text-xs sm:text-sm font-black text-emerald-300 mt-1 line-clamp-1">+Rp {monthlyIncome.toLocaleString('id-ID')}</p>
-            </div>
-            <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-              <p className="text-[9px] uppercase font-bold text-rose-400">Keluar Bulan Ini</p>
-              <p className="text-xs sm:text-sm font-black text-rose-300 mt-1 line-clamp-1">-Rp {monthlyExpenseTotal.toLocaleString('id-ID')}</p>
-            </div>
-            <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-              <p className="text-[9px] uppercase font-bold text-slate-300">Sisa (Net)</p>
-              <p className={`text-xs sm:text-sm font-black mt-1 line-clamp-1 ${monthlyIncome - monthlyExpenseTotal >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                {monthlyIncome - monthlyExpenseTotal >= 0 ? '+' : ''}Rp {(monthlyIncome - monthlyExpenseTotal).toLocaleString('id-ID')}
-              </p>
-            </div>
-          </div>
-        </div>
-
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-10 pb-28 relative z-10">
         {/* Menu Kas Container */}
         <div className="bg-white/95 backdrop-blur-2xl rounded-[32px] p-6 shadow-xl shadow-slate-200/50 border border-white/50 min-h-[200px]">
         {accountsError && (
