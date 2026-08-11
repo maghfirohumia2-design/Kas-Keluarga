@@ -70,6 +70,9 @@ export default function Home() {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [monthlyExpenses, setMonthlyExpenses] = useState<Record<string, number>>({});
   const [totalBalance, setTotalBalance] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [monthlyExpenseTotal, setMonthlyExpenseTotal] = useState(0);
+  const [showTotal, setShowTotal] = useState(false);
   const [accountsError, setAccountsError] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string>("My Family");
@@ -95,27 +98,34 @@ export default function Home() {
       const newBalances: Record<string, number> = {};
       const newMonthlyExpenses: Record<string, number> = {};
       let newTotal = 0;
+      let mIncome = 0;
+      let mExpense = 0;
       
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       
       accountsData?.forEach(acc => { 
-        newBalances[acc.id] = 0; 
+        const initBal = Number(acc.initial_balance || 0);
+        newBalances[acc.id] = initBal; 
         newMonthlyExpenses[acc.id] = 0;
+        newTotal += initBal;
       });
       
       transactions?.forEach(tx => {
         const amount = Number(tx.amount);
+        const txDate = new Date(tx.created_at);
+        const isCurrentMonth = txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+
         if (tx.type === 'income') {
-          newBalances[tx.account_id] += amount;
+          newBalances[tx.account_id] = (newBalances[tx.account_id] || 0) + amount;
           newTotal += amount;
-        } else {
-          newBalances[tx.account_id] -= amount;
+          if (isCurrentMonth) mIncome += amount;
+        } else if (tx.type === 'expense') {
+          newBalances[tx.account_id] = (newBalances[tx.account_id] || 0) - amount;
           newTotal -= amount;
-          
-          const txDate = new Date(tx.created_at);
-          if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-            newMonthlyExpenses[tx.account_id] += amount;
+          if (isCurrentMonth) {
+            mExpense += amount;
+            newMonthlyExpenses[tx.account_id] = (newMonthlyExpenses[tx.account_id] || 0) + amount;
           }
         }
       });
@@ -123,6 +133,8 @@ export default function Home() {
       setBalances(newBalances);
       setMonthlyExpenses(newMonthlyExpenses);
       setTotalBalance(newTotal);
+      setMonthlyIncome(mIncome);
+      setMonthlyExpenseTotal(mExpense);
     }
     setLoading(false);
   }
@@ -147,7 +159,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="max-w-6xl mx-auto px-6 pt-8 relative z-10">
           {/* Header Profile */}
-          <header className="flex justify-between items-center mb-4">
+          <header className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-2xl font-black text-white tracking-tight">{fullName}</h1>
               <p className="text-sm text-emerald-50 font-medium opacity-90">Selalu Sehat dan Bahagia</p>
@@ -160,6 +172,45 @@ export default function Home() {
               )}
             </Link>
           </header>
+
+          {/* Ringkasan Bulanan Card */}
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-white mb-4">
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-emerald-100 font-bold">Total Saldo Gabungan</p>
+                <h2 className="text-xl font-black tracking-tight">
+                  {showTotal ? `Rp ${totalBalance.toLocaleString('id-ID')}` : 'Rp •••••••••'}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowTotal(!showTotal)} className="p-2 hover:bg-white/20 rounded-full transition-colors bg-white/10 text-white">
+                  {showTotal ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <Link href="/transaksi/transfer" className="flex items-center gap-1 bg-white text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-xl text-xs font-bold shadow transition-colors">
+                  <ArrowLeftRight size={14} />
+                  <span>Transfer</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Sub summary: In vs Out this month */}
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-center">
+              <div className="bg-emerald-950/30 rounded-xl p-2">
+                <p className="text-[9px] uppercase font-bold text-emerald-200">Masuk Bulan Ini</p>
+                <p className="text-xs font-black text-emerald-300 mt-0.5">+Rp {monthlyIncome.toLocaleString('id-ID')}</p>
+              </div>
+              <div className="bg-emerald-950/30 rounded-xl p-2">
+                <p className="text-[9px] uppercase font-bold text-emerald-200">Keluar Bulan Ini</p>
+                <p className="text-xs font-black text-rose-300 mt-0.5">-Rp {monthlyExpenseTotal.toLocaleString('id-ID')}</p>
+              </div>
+              <div className="bg-emerald-950/30 rounded-xl p-2">
+                <p className="text-[9px] uppercase font-bold text-emerald-200">Sisa (Net)</p>
+                <p className={`text-xs font-black mt-0.5 ${monthlyIncome - monthlyExpenseTotal >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  {monthlyIncome - monthlyExpenseTotal >= 0 ? '+' : ''}Rp {(monthlyIncome - monthlyExpenseTotal).toLocaleString('id-ID')}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

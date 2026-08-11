@@ -42,6 +42,45 @@ function TransactionFormContent() {
     setLoading(true);
 
     try {
+      const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+
+      // Budget limit warning check for expenses
+      if (type === "expense" && accountId) {
+        const selectedAccount = accounts.find(a => a.id === accountId);
+        if (selectedAccount && Number(selectedAccount.budget_limit) > 0) {
+          const budgetLimit = Number(selectedAccount.budget_limit);
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+
+          // Fetch current month expenses
+          const { data: existingTx } = await supabase
+            .from("transactions")
+            .select("amount, created_at, type")
+            .eq("account_id", accountId)
+            .eq("type", "expense");
+
+          let currentExpenseTotal = 0;
+          existingTx?.forEach(tx => {
+            const txDate = new Date(tx.created_at);
+            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+              currentExpenseTotal += Number(tx.amount);
+            }
+          });
+
+          const projectedTotal = currentExpenseTotal + numAmount;
+          if (projectedTotal > budgetLimit) {
+            const over = projectedTotal - budgetLimit;
+            const confirmSave = window.confirm(
+              `⚠️ PERINGATAN BUDGET!\n\nPengeluaran ini (Rp ${numAmount.toLocaleString("id-ID")}) akan menyebabkan total pengeluaran bulan ini (Rp ${projectedTotal.toLocaleString("id-ID")}) melebihi target budget Anda (Rp ${budgetLimit.toLocaleString("id-ID")}) sebesar Rp ${over.toLocaleString("id-ID")}.\n\nTetap simpan transaksi ini?`
+            );
+            if (!confirmSave) {
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      }
+
       let receipt_url = null;
 
       // Upload file jika ada

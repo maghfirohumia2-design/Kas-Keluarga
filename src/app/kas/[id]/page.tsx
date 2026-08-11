@@ -11,7 +11,8 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Plus
+  Plus,
+  ArrowLeftRight
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -82,7 +83,7 @@ export default function KasDashboardPage() {
         setTransactions(txData);
         
         // Calculate balance & monthly expense
-        let currentBalance = 0;
+        let currentBalance = Number(accData.initial_balance || 0);
         let currentMonthlyExpense = 0;
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
@@ -467,6 +468,15 @@ export default function KasDashboardPage() {
               <span className="text-sm font-bold text-slate-700">Uang Keluar</span>
               <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center border border-red-100">
                 <TrendingDown size={16} />
+              </div>
+            </Link>
+            <Link 
+              href={`/transaksi/transfer?fromId=${accountId}`}
+              className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+            >
+              <span className="text-sm font-bold text-slate-700">Transfer Kas</span>
+              <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                <ArrowLeftRight size={16} />
               </div>
             </Link>
           </div>
