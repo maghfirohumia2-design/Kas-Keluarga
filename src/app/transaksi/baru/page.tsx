@@ -165,11 +165,20 @@ function TransactionFormContent() {
       <header className="mb-6 pt-4 flex items-center gap-4">
         <Link 
           href={prefillAccountId ? `/kas/${prefillAccountId}` : "/"} 
-          className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-50 transition-colors"
+          className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
         >
           <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-xl font-bold text-slate-800">Catat Transaksi</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-800 truncate">
+            {prefillAccountId ? `Catat ${type === 'income' ? 'Pemasukan' : 'Pengeluaran'}` : "Catat Transaksi"}
+          </h1>
+          {prefillAccountId && (
+            <p className="text-sm font-semibold text-emerald-600 truncate">
+              {accounts.find(a => a.id === prefillAccountId)?.name || "Memuat..."}
+            </p>
+          )}
+        </div>
       </header>
 
       <form onSubmit={handleReview} className="space-y-6">
@@ -260,17 +269,7 @@ function TransactionFormContent() {
           </div>
 
           {/* Akun/Kas */}
-          {prefillAccountId ? (
-            <div className="bg-slate-100 p-4 rounded-xl flex items-center gap-3 border border-slate-200">
-              <Lock size={16} className="text-slate-400" />
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kas Terkunci</p>
-                <p className="text-sm font-semibold text-slate-700">
-                  {accounts.find(a => a.id === accountId)?.name || "Memuat..."}
-                </p>
-              </div>
-            </div>
-          ) : (
+          {!prefillAccountId && (
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Pilih Kas</label>
               <select
