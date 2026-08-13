@@ -12,11 +12,14 @@ import {
   Eye,
   EyeOff,
   Plus,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Tag,
+  PieChart
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import { getCategoryBadgeInfo } from "@/lib/categories";
 
 const getGradientForAccount = (name: string) => {
   if (!name) return "from-emerald-500 to-teal-500";
@@ -241,6 +244,52 @@ export default function KasDashboardPage() {
           </h3>
         </div>
 
+        {/* Ringkasan Kategori Bulan Ini */}
+        {(() => {
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+          const catMap: Record<string, number> = {};
+          transactions.forEach((tx: any) => {
+            if (tx.type === 'expense' && tx.category) {
+              const d = new Date(tx.created_at);
+              if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                catMap[tx.category] = (catMap[tx.category] || 0) + Number(tx.amount);
+              }
+            }
+          });
+          const sorted = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 4);
+          if (sorted.length === 0) return null;
+          const total = sorted.reduce((s, [, v]) => s + v, 0);
+          return (
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 shadow-sm">
+              <div className="flex items-center gap-1.5 mb-3">
+                <PieChart size={14} className="text-emerald-500" />
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pengeluaran per Kategori Bulan Ini</p>
+              </div>
+              <div className="space-y-2">
+                {sorted.map(([cat, amount]) => {
+                  const pct = Math.round((amount / total) * 100);
+                  const catInfo = getCategoryBadgeInfo(cat, 'expense');
+                  return (
+                    <div key={cat}>
+                      <div className="flex justify-between items-center mb-0.5">
+                        <span className={`text-[10px] font-bold ${catInfo?.textClass || 'text-slate-600'}`}>{cat}</span>
+                        <span className="text-[10px] font-black text-slate-700">{pct}% · Rp {amount.toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${catInfo?.bgClass?.split(' ')[0]?.replace('bg-', 'bg-') || 'bg-slate-400'} ${pct > 40 ? 'bg-red-400' : ''}`}
+                          style={{ width: `${pct}%`, backgroundColor: pct > 40 ? '#f87171' : pct > 25 ? '#fb923c' : '#34d399' }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Filter Tanggal */}
         <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
           <div className="flex items-center gap-3">
@@ -313,7 +362,7 @@ export default function KasDashboardPage() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800 text-[13px] line-clamp-1">{tx.description}</p>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[10px] text-slate-400 font-medium">
                             {new Date(tx.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
@@ -325,6 +374,14 @@ export default function KasDashboardPage() {
                               </span>
                             </>
                           )}
+                          {tx.category && (() => {
+                            const catInfo = getCategoryBadgeInfo(tx.category, tx.type);
+                            return catInfo ? (
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catInfo.bgClass} ${catInfo.textClass}`}>
+                                {tx.category.split(' ').slice(0, 2).join(' ')}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
                     </div>

@@ -3,9 +3,10 @@
 import { useState, useEffect, use, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Receipt, Printer } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Receipt, Printer, Tag } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { getCategories, ExpenseCategories, IncomeCategories } from "@/lib/categories";
 
 function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -14,6 +15,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   
   const [type, setType] = useState<"income" | "expense">("expense");
+  const [category, setCategory] = useState<string>(ExpenseCategories[0].name);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
@@ -37,6 +39,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
       const { data: txData } = await supabase.from("transactions").select("*").eq("id", id).single();
       if (txData) {
         setType(txData.type);
+        setCategory(txData.category || (txData.type === "income" ? IncomeCategories[0].name : ExpenseCategories[0].name));
         setAccountId(txData.account_id);
         setAmount(txData.amount.toLocaleString("id-ID"));
         setDescription(txData.description);
@@ -83,6 +86,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
         account_id: accountId,
         amount: parseFloat(amount.replace(/\D/g, "")),
         description,
+        category,
         receipt_url,
       }).eq("id", id);
 
@@ -184,18 +188,53 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
           <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-2">
             <button
               type="button"
-              onClick={() => setType("expense")}
+              onClick={() => {
+                setType("expense");
+                setCategory(ExpenseCategories[0].name);
+              }}
               className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${type === "expense" ? "bg-red-500 text-white shadow-md shadow-red-200" : "text-slate-500 hover:bg-slate-50"}`}
             >
               Pengeluaran
             </button>
             <button
               type="button"
-              onClick={() => setType("income")}
+              onClick={() => {
+                setType("income");
+                setCategory(IncomeCategories[0].name);
+              }}
               className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${type === "income" ? "bg-emerald-500 text-white shadow-md shadow-emerald-200" : "text-slate-500 hover:bg-slate-50"}`}
             >
               Pemasukan
             </button>
+          </div>
+
+          {/* Pilihan Kategori (Chip Badges) */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <Tag size={14} className="text-emerald-600" />
+              Pilih Kategori
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {getCategories(type).map((cat) => {
+                const isSelected = category === cat.name;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategory(cat.name)}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                      isSelected
+                        ? type === "income"
+                          ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200 scale-105"
+                          : "bg-red-500 text-white border-red-500 shadow-md shadow-red-200 scale-105"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
