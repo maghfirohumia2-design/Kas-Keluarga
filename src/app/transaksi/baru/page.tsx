@@ -59,14 +59,14 @@ function TransactionFormContent() {
           // Fetch current month expenses
           const { data: existingTx } = await supabase
             .from("transactions")
-            .select("amount, created_at, type")
+            .select("amount, created_at, type, is_transfer")
             .eq("account_id", accountId)
             .eq("type", "expense");
 
           let currentExpenseTotal = 0;
           existingTx?.forEach(tx => {
             const txDate = new Date(tx.created_at);
-            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear && !tx.is_transfer) {
               currentExpenseTotal += Number(tx.amount);
             }
           });

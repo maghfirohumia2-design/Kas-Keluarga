@@ -98,7 +98,7 @@ export default function KasDashboardPage() {
           } else {
             currentBalance -= amount;
             const txDate = new Date(tx.created_at);
-            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear && !tx.is_transfer) {
               currentMonthlyExpense += amount;
             }
           }
