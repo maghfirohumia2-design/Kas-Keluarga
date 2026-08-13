@@ -18,11 +18,26 @@ export default function TransactionList({ initialTransactions }: { initialTransa
     
     setIsDeleting(id);
     try {
-      const { error } = await supabase.from("transactions").delete().eq("id", id);
+      const targetTx = transactions.find(t => t.id === id);
+      let error;
+      if (targetTx?.linked_tx_id || targetTx?.is_transfer) {
+        const res = await supabase
+          .from("transactions")
+          .delete()
+          .or(`id.eq.${id},id.eq.${targetTx?.linked_tx_id},linked_tx_id.eq.${id}`);
+        error = res.error;
+        if (!error) {
+          setTransactions(transactions.filter(t => t.id !== id && t.id !== targetTx?.linked_tx_id && t.linked_tx_id !== id));
+        }
+      } else {
+        const res = await supabase.from("transactions").delete().eq("id", id);
+        error = res.error;
+        if (!error) {
+          setTransactions(transactions.filter(t => t.id !== id));
+        }
+      }
       if (error) throw error;
       
-      // Update state secara lokal agar UI langsung berubah
-      setTransactions(transactions.filter(t => t.id !== id));
       router.refresh(); // Refresh server state (saldo dll)
     } catch (error) {
       console.error("Gagal menghapus:", error);

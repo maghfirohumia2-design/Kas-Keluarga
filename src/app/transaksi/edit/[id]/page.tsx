@@ -24,6 +24,8 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const [existingReceipt, setExistingReceipt] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
+  const [linkedTxId, setLinkedTxId] = useState<string | null>(null);
+  const [isTransfer, setIsTransfer] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [initialFetchLoading, setInitialFetchLoading] = useState(true);
 
@@ -46,6 +48,8 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
         setExistingReceipt(txData.receipt_url);
         setCreatedAt(txData.created_at);
         setUserName(txData.user_name || "Admin");
+        setLinkedTxId(txData.linked_tx_id || null);
+        setIsTransfer(txData.is_transfer || false);
       }
       
       setInitialFetchLoading(false);
@@ -81,16 +85,24 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
       }
 
       // Update transaksi
+      const numAmount = parseFloat(amount.replace(/\D/g, ""));
       const { error } = await supabase.from("transactions").update({
         type,
         account_id: accountId,
-        amount: parseFloat(amount.replace(/\D/g, "")),
+        amount: numAmount,
         description,
         category,
         receipt_url,
       }).eq("id", id);
 
       if (error) throw error;
+
+      // Sync linked transfer transaction if exists
+      if (linkedTxId) {
+        await supabase.from("transactions").update({
+          amount: numAmount,
+        }).eq("id", linkedTxId);
+      }
 
       if (returnTo) {
         router.push(returnTo);

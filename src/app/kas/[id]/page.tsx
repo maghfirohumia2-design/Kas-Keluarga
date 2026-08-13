@@ -436,9 +436,24 @@ export default function KasDashboardPage() {
                 onClick={async () => {
                   if (confirm("Yakin ingin menghapus transaksi ini?")) {
                     setIsDeleting(true);
-                    const { error } = await supabase.from('transactions').delete().eq('id', selectedTx.id);
+                    let error;
+                    if (selectedTx.linked_tx_id || selectedTx.is_transfer) {
+                      const res = await supabase
+                        .from('transactions')
+                        .delete()
+                        .or(`id.eq.${selectedTx.id},id.eq.${selectedTx.linked_tx_id},linked_tx_id.eq.${selectedTx.id}`);
+                      error = res.error;
+                      if (!error) {
+                        setTransactions(transactions.filter(t => t.id !== selectedTx.id && t.id !== selectedTx.linked_tx_id && t.linked_tx_id !== selectedTx.id));
+                      }
+                    } else {
+                      const res = await supabase.from('transactions').delete().eq('id', selectedTx.id);
+                      error = res.error;
+                      if (!error) {
+                        setTransactions(transactions.filter(t => t.id !== selectedTx.id));
+                      }
+                    }
                     if (!error) {
-                      setTransactions(transactions.filter(t => t.id !== selectedTx.id));
                       const amount = Number(selectedTx.amount);
                       if (selectedTx.type === 'income') setBalance(prev => prev - amount);
                       else setBalance(prev => prev + amount);
