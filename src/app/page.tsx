@@ -169,12 +169,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="max-w-6xl mx-auto px-6 pt-8 relative z-10">
           {/* Header Profile */}
-          <header className="flex justify-between items-center mb-2">
-            <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">{fullName}</h1>
-              <p className="text-sm text-emerald-50 font-medium opacity-90">Selalu Sehat dan Bahagia</p>
+          <header className="flex justify-between items-center mb-2 gap-3">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-black text-white tracking-tight truncate">{fullName}</h1>
+              <p className="text-sm text-emerald-50 font-medium opacity-90 truncate">Selalu Sehat dan Bahagia</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Link href="/profil" className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors backdrop-blur-sm shadow-sm border border-white/20">
                 <Settings size={20} />
               </Link>
