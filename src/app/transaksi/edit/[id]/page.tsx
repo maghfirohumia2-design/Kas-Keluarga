@@ -264,31 +264,31 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
               <Tag size={14} className="text-emerald-600" />
               Pilih Kategori
             </label>
-            <div className="flex flex-wrap gap-2">
-              {dbCategories.filter(c => c.type === type).map((cat) => {
-                const isSelected = category === cat.name;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setCategory(cat.name);
-                      amountInputRef.current?.focus();
-                    }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
-                      isSelected
-                        ? type === "income"
-                          ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200 scale-105"
-                          : "bg-red-500 text-white border-red-500 shadow-md shadow-red-200 scale-105"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className="text-base">{cat.icon}</span>
-                    <span>{cat.name.replace(cat.icon + " ", "")}</span>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="flex overflow-x-auto pb-2 gap-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden -mx-2 px-2">
+            {dbCategories.filter(c => c.type === type).map((cat) => {
+              const isSelected = category === cat.name;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setCategory(cat.name);
+                    amountInputRef.current?.focus();
+                  }}
+                  className={`snap-start whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 ${
+                    isSelected
+                      ? type === "income"
+                        ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                        : "bg-red-500 text-white border-red-500 shadow-sm"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="text-sm">{cat.icon}</span>
+                  <span>{cat.name.replace(cat.icon + " ", "")}</span>
+                </button>
+              );
+            })}
+          </div>
           </div>
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">

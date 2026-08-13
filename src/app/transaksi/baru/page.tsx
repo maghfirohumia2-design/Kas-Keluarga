@@ -214,7 +214,7 @@ function TransactionFormContent() {
             <Tag size={14} className="text-emerald-600" />
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pilih Kategori</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex overflow-x-auto pb-2 gap-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden -mx-2 px-2">
             {dbCategories.filter(c => c.type === type).map((cat) => {
               const isSelected = category === cat.name;
               return (
@@ -223,18 +223,17 @@ function TransactionFormContent() {
                   type="button"
                   onClick={() => {
                     setCategory(cat.name);
-                    // Frictionless UX: Auto-advance focus to Amount input
                     amountInputRef.current?.focus();
                   }}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                  className={`snap-start whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 ${
                     isSelected
                       ? type === "income"
-                        ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200 scale-105"
-                        : "bg-red-500 text-white border-red-500 shadow-md shadow-red-200 scale-105"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                        : "bg-red-500 text-white border-red-500 shadow-sm"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  <span className="text-base">{cat.icon}</span>
+                  <span className="text-sm">{cat.icon}</span>
                   <span>{cat.name.replace(cat.icon + " ", "")}</span>
                 </button>
               );
