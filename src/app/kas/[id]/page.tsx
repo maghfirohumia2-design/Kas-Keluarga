@@ -14,7 +14,8 @@ import {
   Plus,
   ArrowLeftRight,
   Tag,
-  PieChart
+  PieChart,
+  Search
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -48,7 +49,7 @@ export default function KasDashboardPage() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
-  
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Budgeting state
   const [monthlyExpense, setMonthlyExpense] = useState(0);
@@ -138,6 +139,31 @@ export default function KasDashboardPage() {
   const isFilterActive = filterStartDate && filterEndDate && filterStartDate <= filterEndDate;
 
   const filteredTxList = transactions.filter(tx => {
+    // Smart Search Logic
+    let matchesSearch = true;
+    const query = searchQuery.trim().toLowerCase();
+    
+    if (query) {
+      if (query.startsWith('>')) {
+        const val = parseFloat(query.substring(1).replace(/\D/g, ''));
+        matchesSearch = !isNaN(val) && tx.amount > val;
+      } else if (query.startsWith('<')) {
+        const val = parseFloat(query.substring(1).replace(/\D/g, ''));
+        matchesSearch = !isNaN(val) && tx.amount < val;
+      } else if (query.startsWith('=')) {
+        const val = parseFloat(query.substring(1).replace(/\D/g, ''));
+        matchesSearch = !isNaN(val) && tx.amount === val;
+      } else if (query.startsWith('#')) {
+        const catStr = query.substring(1);
+        matchesSearch = (tx.category || "").toLowerCase().includes(catStr);
+      } else {
+        matchesSearch = tx.description.toLowerCase().includes(query) || 
+                        (tx.category || "").toLowerCase().includes(query);
+      }
+    }
+
+    if (!matchesSearch) return false;
+
     if (!isFilterActive) return true;
     const txDate = tx.created_at.split('T')[0];
     return txDate >= filterStartDate && txDate <= filterEndDate;
@@ -241,11 +267,21 @@ export default function KasDashboardPage() {
 
       {/* Riwayat Khusus */}
       <div className="px-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h3 className="font-bold text-slate-800 flex items-center gap-1.5 shrink-0">
             <History size={18} className="text-emerald-500" />
             <span>Riwayat</span>
           </h3>
+          <div className="relative flex-1 max-w-[200px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari (>50K, #Makan)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-full text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors shadow-sm"
+            />
+          </div>
         </div>
 
         {/* Ringkasan Kategori Bulan Ini */}
