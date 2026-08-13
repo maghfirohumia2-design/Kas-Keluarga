@@ -19,7 +19,8 @@ import {
   EyeOff,
   ArrowLeftRight,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Settings
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -173,13 +174,18 @@ export default function Home() {
               <h1 className="text-2xl font-black text-white tracking-tight">{fullName}</h1>
               <p className="text-sm text-emerald-50 font-medium opacity-90">Selalu Sehat dan Bahagia</p>
             </div>
-            <Link href="/profil" className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-xl shadow-lg border-[3px] border-emerald-300/50 overflow-hidden relative transition-transform hover:scale-105 active:scale-95">
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt="Profil" fill className="object-cover" />
-              ) : (
-                "👨‍👩‍👧"
-              )}
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/profil" className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors backdrop-blur-sm shadow-sm border border-white/20">
+                <Settings size={20} />
+              </Link>
+              <Link href="/profil" className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-xl shadow-lg border-[3px] border-emerald-300/50 overflow-hidden relative transition-transform hover:scale-105 active:scale-95">
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="Profil" fill className="object-cover" />
+                ) : (
+                  "👨‍👩‍👧"
+                )}
+              </Link>
+            </div>
           </header>
         </div>
       </div>
