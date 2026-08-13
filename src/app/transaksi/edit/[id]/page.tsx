@@ -264,33 +264,31 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
               <Tag size={14} className="text-emerald-600" />
               Pilih Kategori
             </label>
-          <div className="grid grid-cols-3 gap-3">
-            {dbCategories.filter(c => c.type === type).map((cat) => {
-              const isSelected = category === cat.name;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    setCategory(cat.name);
-                    amountInputRef.current?.focus();
-                  }}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border ${
-                    isSelected
-                      ? type === "income"
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-700 ring-1 ring-emerald-500"
-                        : "bg-red-50 border-red-500 text-red-700 ring-1 ring-red-500"
-                      : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300"
-                  }`}
-                >
-                  <span className="text-2xl mb-1.5 drop-shadow-sm">{cat.icon}</span>
-                  <span className="text-[10px] font-bold text-center leading-tight">
-                    {cat.name.replace(cat.icon + " ", "")}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+            <div className="flex flex-wrap gap-2">
+              {dbCategories.filter(c => c.type === type).map((cat) => {
+                const isSelected = category === cat.name;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setCategory(cat.name);
+                      amountInputRef.current?.focus();
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                      isSelected
+                        ? type === "income"
+                          ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200 scale-105"
+                          : "bg-red-500 text-white border-red-500 shadow-md shadow-red-200 scale-105"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span className="text-base">{cat.icon}</span>
+                    <span>{cat.name.replace(cat.icon + " ", "")}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
