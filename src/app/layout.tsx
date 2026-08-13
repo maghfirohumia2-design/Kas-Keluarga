@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -7,7 +7,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Kas Keluarga",
   description: "Aplikasi manajemen kas keluarga, kantor, dan sekolah",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0", // Mencegah zoom di mobile
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import AuthProvider from "@/components/AuthProvider";
