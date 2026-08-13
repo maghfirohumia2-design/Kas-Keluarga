@@ -19,7 +19,6 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { getCategoryBadgeInfo } from "@/lib/categories";
 
 const getGradientForAccount = (name: string) => {
   if (!name) return "from-emerald-500 to-teal-500";
@@ -40,6 +39,7 @@ export default function KasDashboardPage() {
   const [account, setAccount] = useState<any>(null);
   const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
@@ -74,6 +74,10 @@ export default function KasDashboardPage() {
         return;
       }
       setAccount(accData);
+
+      // Fetch categories
+      const { data: catData } = await supabase.from('categories').select('*');
+      if (catData) setDbCategories(catData);
 
       // Fetch transactions for this account
       const { data: txData, error: txError } = await supabase
@@ -375,9 +379,9 @@ export default function KasDashboardPage() {
                             </>
                           )}
                           {tx.category && (() => {
-                            const catInfo = getCategoryBadgeInfo(tx.category, tx.type);
+                            const catInfo = dbCategories.find(c => c.name === tx.category && c.type === tx.type);
                             return catInfo ? (
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catInfo.bgClass} ${catInfo.textClass}`}>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catInfo.bg_class} ${catInfo.text_class}`}>
                                 {tx.category.split(' ').slice(0, 2).join(' ')}
                               </span>
                             ) : null;

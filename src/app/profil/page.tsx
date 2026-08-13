@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2, Users, Plus, Wallet, Trash2 } from "lucide-react";
+import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2, Users, Plus, Wallet, Trash2, Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -519,6 +519,15 @@ export default function ProfilPage() {
             <p className="text-xs text-slate-500">Panduan penggunaan aplikasi</p>
           </div>
         </button>
+        <Link href="/profil/kategori" className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl text-left border-b border-slate-50">
+          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Tag size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-slate-800 text-sm">Kategori Transaksi</p>
+            <p className="text-xs text-slate-500">Atur kategori pemasukan & pengeluaran</p>
+          </div>
+        </Link>
         <div className="p-4 flex items-center gap-4 bg-slate-50 rounded-2xl">
           <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
             <Heart size={20} />

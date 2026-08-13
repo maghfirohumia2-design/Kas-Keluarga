@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Upload, Loader2, Receipt, Printer, Tag, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { getCategories, ExpenseCategories, IncomeCategories } from "@/lib/categories";
 
 function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -15,12 +14,19 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   
   const [type, setType] = useState<"income" | "expense">("expense");
-  const [category, setCategory] = useState<string>(ExpenseCategories[0].name);
+  const [category, setCategory] = useState<string>("");
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  
+  // Restore missing states
+  const [existingReceipt, setExistingReceipt] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+  
   const [linkedTxId, setLinkedTxId] = useState<string | null>(null);
   const [isTransfer, setIsTransfer] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
@@ -37,11 +43,24 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
         setAccounts(accData);
       }
 
+      // Fetch categories
+      const { data: catData } = await supabase.from("categories").select("*").order("name");
+      if (catData) {
+        setDbCategories(catData);
+      }
+
       // Fetch transaction
       const { data: txData } = await supabase.from("transactions").select("*").eq("id", id).single();
       if (txData) {
         setType(txData.type);
-        setCategory(txData.category || (txData.type === "income" ? IncomeCategories[0].name : ExpenseCategories[0].name));
+        
+        let txCategory = txData.category;
+        if (!txCategory && catData) {
+          const defaultCats = catData.filter(c => c.type === txData.type);
+          if (defaultCats.length > 0) txCategory = defaultCats[0].name;
+        }
+        setCategory(txCategory || "");
+        
         setAccountId(txData.account_id);
         setAmount(txData.amount.toLocaleString("id-ID"));
         setDescription(txData.description);
@@ -201,13 +220,13 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
         </header>
 
         <form onSubmit={handleReview} className="space-y-6">
-          {/* Pilihan Jenis */}
           <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-2">
             <button
               type="button"
               onClick={() => {
                 setType("expense");
-                setCategory(ExpenseCategories[0].name);
+                const exps = dbCategories.filter(c => c.type === "expense");
+                if (exps.length > 0) setCategory(exps[0].name);
               }}
               className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${type === "expense" ? "bg-red-500 text-white shadow-md shadow-red-200" : "text-slate-500 hover:bg-slate-50"}`}
             >
@@ -217,7 +236,8 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
               type="button"
               onClick={() => {
                 setType("income");
-                setCategory(IncomeCategories[0].name);
+                const incs = dbCategories.filter(c => c.type === "income");
+                if (incs.length > 0) setCategory(incs[0].name);
               }}
               className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${type === "income" ? "bg-emerald-500 text-white shadow-md shadow-emerald-200" : "text-slate-500 hover:bg-slate-50"}`}
             >
@@ -232,7 +252,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
               Pilih Kategori
             </label>
             <div className="flex flex-wrap gap-2">
-              {getCategories(type).map((cat) => {
+              {dbCategories.filter(c => c.type === type).map((cat) => {
                 const isSelected = category === cat.name;
                 return (
                   <button
@@ -252,7 +272,8 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
                         : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
-                    <span>{cat.name}</span>
+                    <span className="text-base">{cat.icon}</span>
+                    <span>{cat.name.replace(cat.icon + " ", "")}</span>
                   </button>
                 );
               })}
