@@ -49,9 +49,29 @@ export default function TransactionList({ initialTransactions }: { initialTransa
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      // Filter by search query
-      const matchesSearch = tx.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            (tx.accounts?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      // Smart Search Logic
+      let matchesSearch = true;
+      const query = searchQuery.trim().toLowerCase();
+      
+      if (query) {
+        if (query.startsWith('>')) {
+          const val = parseFloat(query.substring(1).replace(/\D/g, ''));
+          matchesSearch = !isNaN(val) && tx.amount > val;
+        } else if (query.startsWith('<')) {
+          const val = parseFloat(query.substring(1).replace(/\D/g, ''));
+          matchesSearch = !isNaN(val) && tx.amount < val;
+        } else if (query.startsWith('=')) {
+          const val = parseFloat(query.substring(1).replace(/\D/g, ''));
+          matchesSearch = !isNaN(val) && tx.amount === val;
+        } else if (query.startsWith('#')) {
+          const catStr = query.substring(1);
+          matchesSearch = (tx.category || "").toLowerCase().includes(catStr);
+        } else {
+          matchesSearch = tx.description.toLowerCase().includes(query) || 
+                          (tx.accounts?.name || "").toLowerCase().includes(query) ||
+                          (tx.category || "").toLowerCase().includes(query);
+        }
+      }
       
       // Filter by month (format YYYY-MM)
       let matchesMonth = true;
@@ -121,7 +141,7 @@ export default function TransactionList({ initialTransactions }: { initialTransa
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Cari transaksi..."
+            placeholder="Cari transaksi, atau ketik >50000, #Makan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
