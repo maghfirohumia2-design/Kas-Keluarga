@@ -309,16 +309,15 @@ export default function KasDashboardPage() {
               <div className="space-y-2">
                 {sorted.map(([cat, amount]) => {
                   const pct = Math.round((amount / total) * 100);
-                  const catInfo = getCategoryBadgeInfo(cat, 'expense');
                   return (
                     <div key={cat}>
                       <div className="flex justify-between items-center mb-0.5">
-                        <span className={`text-[10px] font-bold ${catInfo?.textClass || 'text-slate-600'}`}>{cat}</span>
+                        <span className="text-[10px] font-bold text-slate-600">{cat}</span>
                         <span className="text-[10px] font-black text-slate-700">{pct}% · Rp {amount.toLocaleString('id-ID')}</span>
                       </div>
                       <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${catInfo?.bgClass?.split(' ')[0]?.replace('bg-', 'bg-') || 'bg-slate-400'} ${pct > 40 ? 'bg-red-400' : ''}`}
+                          className={`h-full rounded-full bg-emerald-400 ${pct > 40 ? 'bg-red-400' : ''}`}
                           style={{ width: `${pct}%`, backgroundColor: pct > 40 ? '#f87171' : pct > 25 ? '#fb923c' : '#34d399' }}
                         />
                       </div>

@@ -166,6 +166,7 @@ function TransferFormContent() {
           </Link>
         </div>
       ) : (
+        <>
         <form onSubmit={handleReview} className="space-y-6">
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
           {/* Kas Asal & Tujuan Card */}
@@ -322,6 +323,7 @@ function TransferFormContent() {
           </div>
         </div>
       )}
+      </>
       )}
     </main>
   );
