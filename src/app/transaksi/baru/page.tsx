@@ -14,7 +14,9 @@ function TransactionFormContent() {
   const prefillType = searchParams.get("type");
 
   const [type, setType] = useState<"income" | "expense">((prefillType as "income" | "expense") || "expense");
-  const [category, setCategory] = useState<string>(ExpenseCategories[0].name);
+  const [category, setCategory] = useState<string>(
+    (prefillType === "income" ? IncomeCategories[0].name : ExpenseCategories[0].name)
+  );
   const [accounts, setAccounts] = useState<any[]>([]);
   const [accountId, setAccountId] = useState(prefillAccountId || "");
   const [amount, setAmount] = useState("");
@@ -170,10 +172,10 @@ function TransactionFormContent() {
 
         {/* Pilihan Kategori (Chip Badges) */}
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 mb-2.5">
             <Tag size={14} className="text-emerald-600" />
-            Pilih Kategori
-          </label>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pilih Kategori</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {getCategories(type).map((cat) => {
               const isSelected = category === cat.name;

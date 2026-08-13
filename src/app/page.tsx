@@ -93,7 +93,7 @@ export default function Home() {
 
     const { data: transactions } = await supabase
       .from('transactions')
-      .select('account_id, type, amount, created_at');
+      .select('account_id, type, amount, created_at, is_transfer');
 
     if (accountsError) {
       setAccountsError(true);
@@ -124,12 +124,16 @@ export default function Home() {
         if (tx.type === 'income') {
           newBalances[tx.account_id] = (newBalances[tx.account_id] || 0) + amount;
           newTotal += amount;
-          if (isCurrentMonth) mIncome += amount;
+          // Hanya hitung income bukan transfer untuk statistik bulanan
+          if (isCurrentMonth && !tx.is_transfer) mIncome += amount;
         } else if (tx.type === 'expense') {
           newBalances[tx.account_id] = (newBalances[tx.account_id] || 0) - amount;
           newTotal -= amount;
           if (isCurrentMonth) {
-            mExpense += amount;
+            // Hanya hitung expense bukan transfer untuk statistik bulanan
+            if (!tx.is_transfer) {
+              mExpense += amount;
+            }
             newMonthlyExpenses[tx.account_id] = (newMonthlyExpenses[tx.account_id] || 0) + amount;
           }
         }

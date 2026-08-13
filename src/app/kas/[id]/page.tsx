@@ -250,7 +250,7 @@ export default function KasDashboardPage() {
           const currentYear = new Date().getFullYear();
           const catMap: Record<string, number> = {};
           transactions.forEach((tx: any) => {
-            if (tx.type === 'expense' && tx.category) {
+            if (tx.type === 'expense' && tx.category && !tx.is_transfer) {
               const d = new Date(tx.created_at);
               if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
                 catMap[tx.category] = (catMap[tx.category] || 0) + Number(tx.amount);
