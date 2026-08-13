@@ -151,12 +151,22 @@ function TransferFormContent() {
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <ArrowLeftRight className="text-blue-500" size={22} />
-          Transfer Antar Kas
+          <ArrowLeftRight className="text-blue-500" />
+          Transfer Kas
         </h1>
       </header>
 
-      <form onSubmit={handleReview} className="space-y-6">
+      {accounts.length < 2 ? (
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+          <ArrowLeftRight size={48} className="mx-auto text-slate-300 mb-4" />
+          <h2 className="text-lg font-bold text-slate-800 mb-2">Kas Tidak Cukup</h2>
+          <p className="text-sm text-slate-500 mb-6">Anda membutuhkan minimal 2 kas untuk melakukan transfer.</p>
+          <Link href="/profil" className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold inline-block hover:bg-emerald-600 transition-colors">
+            Tambah Kas Baru
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={handleReview} className="space-y-6">
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
           {/* Kas Asal & Tujuan Card */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
@@ -311,6 +321,7 @@ function TransferFormContent() {
             </div>
           </div>
         </div>
+      )}
       )}
     </main>
   );

@@ -367,7 +367,21 @@ export default function ProfilPage() {
       // PIN benar, eksekusi hapus
       const kasToDel = accounts.find(a => a.id === selectedKasToDelete);
       
-      // Hapus transaksi
+      // Cari dan hapus semua transaksi transfer terkait di kas lain
+      const { data: linkedTxs } = await supabase
+        .from('transactions')
+        .select('linked_tx_id')
+        .eq('account_id', selectedKasToDelete)
+        .not('linked_tx_id', 'is', null);
+
+      if (linkedTxs && linkedTxs.length > 0) {
+        const linkedIds = linkedTxs.map(t => t.linked_tx_id).filter(id => id);
+        if (linkedIds.length > 0) {
+          await supabase.from('transactions').delete().in('id', linkedIds);
+        }
+      }
+
+      // Hapus transaksi di kas ini
       await supabase.from('transactions').delete().eq('account_id', selectedKasToDelete);
       // Hapus kas
       const { error: delError } = await supabase.from('accounts').delete().eq('id', selectedKasToDelete);

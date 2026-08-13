@@ -52,6 +52,19 @@ function TransactionFormContent() {
 
   const handleReview = (e: React.FormEvent) => {
     e.preventDefault();
+    const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+    if (numAmount <= 0) {
+      alert("Masukkan nominal transaksi yang valid (lebih dari 0)!");
+      return;
+    }
+    if (!accountId) {
+      alert("Pilih kas terlebih dahulu!");
+      return;
+    }
+    if (!category) {
+      alert("Pilih kategori terlebih dahulu!");
+      return;
+    }
     setShowConfirmModal(true);
   };
 
