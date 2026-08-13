@@ -380,11 +380,19 @@ export default function KasDashboardPage() {
                           )}
                           {tx.category && (() => {
                             const catInfo = dbCategories.find(c => c.name === tx.category && c.type === tx.type);
-                            return catInfo ? (
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catInfo.bg_class} ${catInfo.text_class}`}>
-                                {tx.category.split(' ').slice(0, 2).join(' ')}
-                              </span>
-                            ) : null;
+                            if (catInfo) {
+                              return (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catInfo.bg_class} ${catInfo.text_class}`}>
+                                  {tx.category.split(' ').slice(0, 2).join(' ')}
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md border bg-slate-100 border-slate-200 text-slate-500">
+                                  {tx.category.split(' ').slice(0, 2).join(' ')}
+                                </span>
+                              );
+                            }
                           })()}
                         </div>
                       </div>
