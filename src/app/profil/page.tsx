@@ -21,6 +21,13 @@ export default function ProfilPage() {
   const [isSubmittingKas, setIsSubmittingKas] = useState(false);
 
   // State untuk modal hapus Kas
+  const [showEditKasModal, setShowEditKasModal] = useState(false);
+  const [selectedKasToEdit, setSelectedKasToEdit] = useState("");
+  const [editKasName, setEditKasName] = useState("");
+  const [isEditingKasLoading, setIsEditingKasLoading] = useState(false);
+  const [editKasMessage, setEditKasMessage] = useState<{text: string, type: "error"|"success"}|null>(null);
+
+  // State untuk modal hapus Kas
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedKasToDelete, setSelectedKasToDelete] = useState<string>("");
   const [deletePin, setDeletePin] = useState("");
@@ -347,6 +354,32 @@ export default function ProfilPage() {
     setIsSubmittingKas(false);
   };
 
+  const handleEditKas = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedKasToEdit || !editKasName.trim()) return;
+    
+    setIsEditingKasLoading(true);
+    setEditKasMessage(null);
+    try {
+      const { error } = await supabase.from('accounts').update({
+        name: editKasName
+      }).eq('id', selectedKasToEdit);
+
+      if (error) throw error;
+
+      setEditKasMessage({ text: "Nama Kas berhasil diubah!", type: "success" });
+      setTimeout(() => {
+        setShowEditKasModal(false);
+        setEditKasMessage(null);
+        fetchAccountsList();
+      }, 1500);
+    } catch (err: any) {
+      setEditKasMessage({ text: "Gagal mengubah nama Kas.", type: "error" });
+    } finally {
+      setIsEditingKasLoading(false);
+    }
+  };
+
   const handleSecureDeleteKas = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedKasToDelete || deletePin.length !== 6) return;
@@ -504,21 +537,29 @@ export default function ProfilPage() {
           </p>
         )}
 
-        <div className="w-full flex justify-between mt-4 pt-6 border-t border-slate-100">
+        <div className="w-full flex gap-3 mt-4 pt-6 border-t border-slate-100">
           <button 
             onClick={() => setShowDeleteModal(true)}
-            className="px-5 py-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white font-bold rounded-xl transition-all flex items-center gap-2 border border-red-100 hover:border-red-500 shadow-sm"
+            className="flex-1 py-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white font-bold rounded-xl transition-all flex justify-center items-center gap-1.5 border border-red-100 hover:border-red-500 shadow-sm"
           >
             <Trash2 size={16} />
-            <span className="text-xs">Hapus Kas</span>
+            <span className="text-xs">Hapus</span>
+          </button>
+
+          <button 
+            onClick={() => setShowEditKasModal(true)}
+            className="flex-1 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white font-bold rounded-xl transition-all flex justify-center items-center gap-1.5 border border-blue-100 hover:border-blue-500 shadow-sm"
+          >
+            <Edit2 size={16} />
+            <span className="text-xs">Ubah</span>
           </button>
           
           <button 
             onClick={() => setShowAddKas(true)}
-            className="px-5 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-sm shadow-emerald-200"
+            className="flex-1 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all flex justify-center items-center gap-1.5 shadow-sm shadow-emerald-200"
           >
             <Plus size={16} />
-            <span className="text-xs">Tambah Kas</span>
+            <span className="text-xs">Tambah</span>
           </button>
         </div>
       </div>
@@ -674,6 +715,74 @@ export default function ProfilPage() {
                   className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50 flex justify-center items-center"
                 >
                   {isSubmittingKas ? <Loader2 className="animate-spin" size={20} /> : "Simpan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Kas */}
+      {showEditKasModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Ubah Nama Kas</h2>
+            
+            {editKasMessage && (
+              <div className={`p-3 rounded-xl text-xs font-medium mb-4 ${editKasMessage.type === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
+                {editKasMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleEditKas} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Pilih Kas</label>
+                <select
+                  value={selectedKasToEdit}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedKasToEdit(id);
+                    const kas = accounts.find(a => a.id === id);
+                    if (kas) setEditKasName(kas.name);
+                  }}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-medium"
+                  required
+                >
+                  <option value="" disabled>-- Pilih Kas --</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedKasToEdit && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nama Baru</label>
+                  <input
+                    type="text"
+                    required
+                    value={editKasName}
+                    onChange={(e) => setEditKasName(e.target.value)}
+                    placeholder="Masukkan nama kas baru"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-medium"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditKasModal(false); setEditKasMessage(null); }}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditingKasLoading || !selectedKasToEdit || !editKasName}
+                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 flex justify-center items-center"
+                >
+                  {isEditingKasLoading ? <Loader2 className="animate-spin" size={20} /> : "Simpan"}
                 </button>
               </div>
             </form>
