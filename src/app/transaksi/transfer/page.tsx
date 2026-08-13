@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowLeftRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 function TransferFormContent() {
@@ -18,6 +18,7 @@ function TransferFormContent() {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentUserName, setCurrentUserName] = useState("Admin");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -47,8 +48,23 @@ function TransferFormContent() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleReview = (e: React.FormEvent) => {
     e.preventDefault();
+    if (fromAccountId === toAccountId) {
+      alert("Kas asal dan kas tujuan tidak boleh sama!");
+      return;
+    }
+
+    const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+    if (numAmount <= 0) {
+      alert("Masukkan nominal transfer yang valid!");
+      return;
+    }
+    setShowConfirmModal(true);
+  };
+
+  const handleSaveTransaction = async () => {
+    setShowConfirmModal(false);
     if (fromAccountId === toAccountId) {
       alert("Kas asal dan kas tujuan tidak boleh sama!");
       return;
@@ -140,7 +156,7 @@ function TransferFormContent() {
         </h1>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleReview} className="space-y-6">
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
           {/* Kas Asal & Tujuan Card */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
@@ -244,6 +260,58 @@ function TransferFormContent() {
           )}
         </button>
       </form>
+
+      {/* Konfirmasi Transfer (Pre-Save Modal) */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 pb-safe">
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <CheckCircle size={32} />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Konfirmasi Transfer</h2>
+              <p className="text-sm text-slate-500 mt-1">Pastikan nominal dan tujuan sudah benar</p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-6">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Nominal</span>
+                <span className="text-lg font-black text-blue-600">Rp {amount}</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Dari Kas</span>
+                <span className="text-sm font-bold text-slate-700">{accounts.find(a => a.id === fromAccountId)?.name}</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Ke Kas</span>
+                <span className="text-sm font-bold text-emerald-600">{accounts.find(a => a.id === toAccountId)?.name}</span>
+              </div>
+              <div className="flex justify-between items-start pt-1">
+                <span className="text-xs font-semibold text-slate-400 uppercase mt-0.5">Catatan</span>
+                <span className="text-sm font-medium text-slate-700 text-right max-w-[60%]">{description || '-'}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleSaveTransaction}
+                disabled={loading}
+                className="flex-1 py-3.5 text-white font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Yakin & Kirim'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

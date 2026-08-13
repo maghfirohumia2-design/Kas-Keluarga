@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Lock, Tag } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Lock, Tag, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { getCategories, ExpenseCategories, IncomeCategories } from "@/lib/categories";
 
@@ -24,6 +24,9 @@ function TransactionFormContent() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentUserName, setCurrentUserName] = useState("Admin");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function fetchAccountsAndUser() {
@@ -41,8 +44,13 @@ function TransactionFormContent() {
     fetchAccountsAndUser();
   }, [prefillAccountId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleReview = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowConfirmModal(true);
+  };
+
+  const handleSaveTransaction = async () => {
+    setShowConfirmModal(false);
     setLoading(true);
 
     try {
@@ -145,7 +153,7 @@ function TransactionFormContent() {
         <h1 className="text-xl font-bold text-slate-800">Catat Transaksi</h1>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleReview} className="space-y-6">
         {/* Pilihan Jenis */}
         <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-2">
           <button
@@ -183,7 +191,13 @@ function TransactionFormContent() {
                 <button
                   key={cat.id}
                   type="button"
-                  onClick={() => setCategory(cat.name)}
+                  onClick={() => {
+                    setCategory(cat.name);
+                    // Frictionless UX: Auto-advance focus to Amount input
+                    setTimeout(() => {
+                      amountInputRef.current?.focus();
+                    }, 100);
+                  }}
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
                     isSelected
                       ? type === "income"
@@ -206,6 +220,7 @@ function TransactionFormContent() {
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">Rp</span>
               <input
+                ref={amountInputRef}
                 type="text"
                 inputMode="numeric"
                 required
@@ -304,6 +319,66 @@ function TransactionFormContent() {
           )}
         </button>
       </form>
+
+      {/* Konfirmasi Simpan (Pre-Save Modal) */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 pb-safe">
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <CheckCircle size={32} />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Konfirmasi Transaksi</h2>
+              <p className="text-sm text-slate-500 mt-1">Periksa kembali detail sebelum menyimpan</p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-6">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Jenis</span>
+                <span className={`text-sm font-bold ${type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Nominal</span>
+                <span className="text-base font-black text-slate-800">Rp {amount}</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Kategori</span>
+                <span className="text-sm font-bold text-slate-700">{category}</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Kas</span>
+                <span className="text-sm font-bold text-slate-700">{accounts.find(a => a.id === accountId)?.name}</span>
+              </div>
+              <div className="flex justify-between items-start pt-1">
+                <span className="text-xs font-semibold text-slate-400 uppercase mt-0.5">Ket</span>
+                <span className="text-sm font-medium text-slate-700 text-right max-w-[60%]">{description}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleSaveTransaction}
+                disabled={loading}
+                className={`flex-1 py-3.5 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
+                  type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' : 'bg-red-500 hover:bg-red-600 shadow-red-200'
+                }`}
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Yakin & Simpan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
