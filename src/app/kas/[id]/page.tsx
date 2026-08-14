@@ -481,10 +481,6 @@ export default function KasDashboardPage() {
                 Ubah Transaksi
               </Link>
               
-              <button 
-                onClick={async () => {
-                  if (confirm("Yakin ingin menghapus transaksi ini?")) {
-                    setIsDeleting(true);
               {profile?.role === 'super_admin' && (
                 <button 
                   onClick={async () => {
