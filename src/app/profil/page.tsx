@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createUserAction, getUsersAction, deleteUserAction, updateUserAction } from "@/app/actions/admin";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function ProfilPage() {
+  const { profile } = useAuth();
   const [phone, setPhone] = useState<string | null>("Memuat...");
   const [fullName, setFullName] = useState<string>("My Profile");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -532,9 +534,19 @@ export default function ProfilPage() {
         )}
         
         {!isEditingProfile && (
-          <p className="text-sm font-medium text-slate-500 mb-2 bg-slate-50 px-4 py-1 rounded-full border border-slate-100">
-            {phone}
-          </p>
+          <div className="flex flex-col items-center gap-1.5 mb-2">
+            <p className="text-sm font-medium text-slate-500 bg-slate-50 px-4 py-1 rounded-full border border-slate-100">
+              {phone}
+            </p>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${profile?.role === 'super_admin' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                {profile?.role === 'super_admin' ? 'Panglima (Admin)' : 'Prajurit (Member)'}
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-pink-100 text-pink-600">
+                {profile?.points || 0} Poin
+              </span>
+            </div>
+          </div>
         )}
 
         <div className="w-full flex gap-3 mt-4 pt-6 border-t border-slate-100">

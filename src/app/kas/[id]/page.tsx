@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useAuth } from "@/components/AuthProvider";
 
 const getGradientForAccount = (name: string) => {
   if (!name) return "from-emerald-500 to-teal-500";
@@ -33,6 +34,7 @@ const getGradientForAccount = (name: string) => {
 };
 
 export default function KasDashboardPage() {
+  const { profile } = useAuth();
   const params = useParams();
   const router = useRouter();
   const accountId = params.id as string;
@@ -483,37 +485,41 @@ export default function KasDashboardPage() {
                 onClick={async () => {
                   if (confirm("Yakin ingin menghapus transaksi ini?")) {
                     setIsDeleting(true);
-                    let error;
-                    if (selectedTx.linked_tx_id || selectedTx.is_transfer) {
-                      const res = await supabase
-                        .from('transactions')
-                        .delete()
-                        .or(`id.eq.${selectedTx.id},id.eq.${selectedTx.linked_tx_id},linked_tx_id.eq.${selectedTx.id}`);
-                      error = res.error;
-                      if (!error) {
-                        setTransactions(transactions.filter(t => t.id !== selectedTx.id && t.id !== selectedTx.linked_tx_id && t.linked_tx_id !== selectedTx.id));
+              {profile?.role === 'super_admin' && (
+                <button 
+                  onClick={async () => {
+                    if (confirm("Yakin ingin menghapus transaksi ini?")) {
+                      setIsDeleting(true);
+                      let error = null;
+                      if (selectedTx.is_transfer && selectedTx.linked_tx_id) {
+                        const res = await fetch('/api/kas/transfer?id=' + selectedTx.id + '&linked_id=' + selectedTx.linked_tx_id, { method: 'DELETE' });
+                        const json = await res.json();
+                        error = json.error;
+                        if (!error) {
+                          setTransactions(transactions.filter(t => t.id !== selectedTx.id && t.id !== selectedTx.linked_tx_id));
+                        }
+                      } else {
+                        const res = await supabase.from('transactions').delete().eq('id', selectedTx.id);
+                        error = res.error;
+                        if (!error) {
+                          setTransactions(transactions.filter(t => t.id !== selectedTx.id));
+                        }
                       }
-                    } else {
-                      const res = await supabase.from('transactions').delete().eq('id', selectedTx.id);
-                      error = res.error;
                       if (!error) {
-                        setTransactions(transactions.filter(t => t.id !== selectedTx.id));
+                        const amount = Number(selectedTx.amount);
+                        if (selectedTx.type === 'income') setBalance(prev => prev - amount);
+                        else setBalance(prev => prev + amount);
                       }
+                      setIsDeleting(false);
+                      setSelectedTx(null);
                     }
-                    if (!error) {
-                      const amount = Number(selectedTx.amount);
-                      if (selectedTx.type === 'income') setBalance(prev => prev - amount);
-                      else setBalance(prev => prev + amount);
-                    }
-                    setIsDeleting(false);
-                    setSelectedTx(null);
-                  }
-                }}
-                disabled={isDeleting}
-                className="w-full py-4 bg-red-50 text-red-500 font-bold rounded-2xl flex items-center justify-center transition-colors hover:bg-red-100 disabled:opacity-50"
-              >
-                {isDeleting ? "Menghapus..." : "Hapus Transaksi"}
-              </button>
+                  }}
+                  disabled={isDeleting}
+                  className="w-full py-4 bg-red-50 text-red-500 font-bold rounded-2xl flex items-center justify-center transition-colors hover:bg-red-100 disabled:opacity-50"
+                >
+                  {isDeleting ? "Menghapus..." : "Hapus Transaksi"}
+                </button>
+              )}
               
               <button 
                 onClick={() => setSelectedTx(null)}

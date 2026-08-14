@@ -1,20 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+interface AuthContextType {
+  session: any;
+  profile: any;
+  refreshProfile: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({ session: null, profile: null, refreshProfile: async () => {} });
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const router = useRouter();
   const pathname = usePathname();
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (!error && data) {
+        setProfile(data);
+      }
+    } catch (e) {
+      console.error("Gagal mengambil profile:", e);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (session?.user?.id) {
+      await fetchProfile(session.user.id);
+    }
+  };
+
   useEffect(() => {
     // Cek status sesi saat pertama kali dimuat
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
       setLoading(false);
       if (!session && pathname !== "/login") {
         router.replace("/login");
@@ -24,8 +57,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     });
 
     // Pantau perubahan sesi (saat login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
       if (!session && pathname !== "/login") {
         router.replace("/login");
       } else if (session && pathname === "/login") {
@@ -51,7 +89,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   // Jika sudah login, tampilkan konten aplikasi (Beranda dsb)
   if (session) {
-    return <>{children}</>;
+    return (
+      <AuthContext.Provider value={{ session, profile, refreshProfile }}>
+        {children}
+      </AuthContext.Provider>
+    );
   }
 
   return null;

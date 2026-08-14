@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useState, useMemo } from "react";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function TransactionList({ initialTransactions }: { initialTransactions: any[] }) {
+  const { profile } = useAuth();
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -220,13 +222,15 @@ export default function TransactionList({ initialTransactions }: { initialTransa
             >
               <Edit2 size={12} /> Ubah
             </Link>
-            <button 
-              onClick={() => handleDelete(tx.id)}
-              disabled={isDeleting === tx.id}
-              className={`flex-1 py-2 text-xs font-medium bg-red-50 text-red-500 rounded-lg flex items-center justify-center gap-1.5 hover:bg-red-100 hover:text-red-600 transition-colors ${isDeleting === tx.id ? 'opacity-50' : ''}`}
-            >
-              <Trash2 size={12} /> {isDeleting === tx.id ? 'Menghapus...' : 'Hapus'}
-            </button>
+            {profile?.role === 'super_admin' && (
+              <button 
+                onClick={() => handleDelete(tx.id)}
+                disabled={isDeleting === tx.id}
+                className={`flex-1 py-2 text-xs font-medium bg-red-50 text-red-500 rounded-lg flex items-center justify-center gap-1.5 hover:bg-red-100 hover:text-red-600 transition-colors ${isDeleting === tx.id ? 'opacity-50' : ''}`}
+              >
+                <Trash2 size={12} /> {isDeleting === tx.id ? 'Menghapus...' : 'Hapus'}
+              </button>
+            )}
           </div>
         </div>
       ))}
