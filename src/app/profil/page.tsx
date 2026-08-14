@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createUserAction, getUsersAction, deleteUserAction, updateUserAction } from "@/app/actions/admin";
+import { createUserAction, getUsersAction, deleteUserAction, updateUserAction, updateUserRoleAction } from "@/app/actions/admin";
 import { useAuth } from "@/components/AuthProvider";
 
 export default function ProfilPage() {
@@ -64,6 +64,7 @@ export default function ProfilPage() {
   const [editMemberName, setEditMemberName] = useState("");
   const [editMemberPhone, setEditMemberPhone] = useState("");
   const [editMemberPin, setEditMemberPin] = useState("");
+  const [editMemberRole, setEditMemberRole] = useState("member");
 
   const router = useRouter();
 
@@ -323,6 +324,10 @@ export default function ProfilPage() {
     if (res.error) {
       alert(res.error);
     } else {
+      // Perbarui juga rolenya
+      if (editMemberRole) {
+        await updateUserRoleAction(userId, editMemberRole);
+      }
       setEditMemberId(null);
       const refresh = await getUsersAction();
       if (refresh.success) setMembers(refresh.users);
@@ -986,6 +991,20 @@ export default function ProfilPage() {
                             className="w-1/2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                           />
                         </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditMemberRole('super_admin')}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${editMemberRole === 'super_admin' ? 'bg-orange-100 text-orange-600 border-orange-200' : 'bg-white text-slate-500 border-slate-200'}`}
+                          >
+                            Jadikan Admin
+                          </button>
+                          <button
+                            onClick={() => setEditMemberRole('member')}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${editMemberRole === 'member' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-200'}`}
+                          >
+                            Jadikan Member
+                          </button>
+                        </div>
                         <div className="flex justify-end gap-2 pt-2">
                           <button onClick={() => setEditMemberId(null)} className="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-200 rounded-lg hover:bg-slate-300">Batal</button>
                           <button onClick={() => handleSaveEditMember(m.id)} disabled={loadingMembers} className="px-4 py-2 text-xs font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 flex items-center gap-1">
@@ -994,27 +1013,32 @@ export default function ProfilPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 shrink-0">
-                            <UserCircle size={20} />
+                      <div className="flex flex-col">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800 flex items-center gap-2">
+                              {m.fullName}
+                            </span>
+                            <span className={`text-[10px] font-bold w-fit mt-1 px-1.5 py-0.5 rounded ${m.role === 'super_admin' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                              {m.role === 'super_admin' ? 'Panglima (Admin)' : 'Prajurit (Member)'}
+                            </span>
                           </div>
-                          <div className="overflow-hidden">
-                            <p className="font-bold text-slate-800 text-sm truncate">{m.fullName}</p>
-                            <p className="text-xs text-slate-500 truncate">{m.phone}</p>
-                          </div>
+                          <span className="text-[10px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-full shadow-sm">
+                            {m.phone}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex justify-between items-center border-t border-slate-200/60 pt-3 mt-3">
                           <button 
                             onClick={() => {
                               setEditMemberId(m.id);
                               setEditMemberName(m.fullName);
                               setEditMemberPhone(m.phone);
-                              setEditMemberPin(""); // kosongkan pin, tidak diedit unless diisi
+                              setEditMemberPin("");
+                              setEditMemberRole(m.role || 'member');
                             }}
-                            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-blue-500 flex items-center justify-center hover:bg-blue-50 transition-colors shadow-sm"
+                            className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg"
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={12} /> Ubah Profil & Role
                           </button>
                           <button 
                             onClick={() => handleDeleteMember(m.id, m.fullName)}

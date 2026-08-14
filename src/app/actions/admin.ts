@@ -61,19 +61,25 @@ export async function getUsersAction() {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     
     if (error) return { error: error.message };
+
+    const { data: profiles } = await supabaseAdmin.from('profiles').select('*');
     
     // Format the response nicely
-    const users = data.users.map(u => {
+    const users = (data?.users || []).map(u => {
       const phoneOnly = u.email ? u.email.replace("hp_", "").replace("@kaskeluarga.com", "") : "";
+      const p = profiles?.find(p => p.id === u.id) || {};
+      
       return {
         id: u.id,
         phone: phoneOnly,
-        fullName: u.user_metadata?.full_name || "Tanpa Nama",
+        fullName: p.full_name || u.user_metadata?.full_name || "Tanpa Nama",
+        role: p.role || 'member',
+        points: p.points || 0,
         createdAt: u.created_at
       }
     });
 
-    return { success: true, users: users };
+    return { success: true, users };
   } catch (err: any) {
     console.error("Get users exception:", err);
     return { error: err.message || "Terjadi kesalahan sistem saat mengambil data." };
@@ -125,3 +131,16 @@ export async function updateUserAction(userId: string, phone: string, fullName: 
   }
 }
 
+export async function updateUserRoleAction(userId: string, newRole: string) {
+  try {
+    if (!supabaseServiceKey) return { error: "Service Role Key tidak ditemukan." };
+    
+    const { error } = await supabaseAdmin.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) return { error: error.message };
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error("Update role exception:", err);
+    return { error: err.message || "Gagal memperbarui role." };
+  }
+}
