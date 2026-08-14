@@ -11,10 +11,6 @@ export default function RewardsPage() {
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [profile]);
-
   const fetchData = async () => {
     setLoading(true);
     // Fetch Rewards
@@ -39,6 +35,10 @@ export default function RewardsPage() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [profile]);
 
   const handleClaim = async (reward: any) => {
     if (!profile) return;

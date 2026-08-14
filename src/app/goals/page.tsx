@@ -16,16 +16,16 @@ export default function GoalsPage() {
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchGoals();
-  }, []);
-
   const fetchGoals = async () => {
     setLoading(true);
     const { data } = await supabase.from("family_goals").select("*").order("created_at", { ascending: false });
     if (data) setGoals(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchGoals();
+  }, []);
 
   const handleContributeClick = (goal: any) => {
     setSelectedGoal(goal);
