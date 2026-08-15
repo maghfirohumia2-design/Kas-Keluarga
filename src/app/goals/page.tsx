@@ -4,30 +4,35 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import { Target, Plus, Loader2, ArrowRight, Wallet } from "lucide-react";
+import { FamilyGoal } from "@/types/database";
 
 export default function GoalsPage() {
   const { profile } = useAuth();
-  const [goals, setGoals] = useState<any[]>([]);
+  const [goals, setGoals] = useState<FamilyGoal[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal State
   const [showContributeModal, setShowContributeModal] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<FamilyGoal | null>(null);
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchGoals = async () => {
-    setLoading(true);
+  const refreshGoals = async () => {
     const { data } = await supabase.from("family_goals").select("*").order("created_at", { ascending: false });
-    if (data) setGoals(data);
-    setLoading(false);
+    if (data) setGoals(data as FamilyGoal[]);
   };
 
   useEffect(() => {
-    fetchGoals();
+    async function loadData() {
+      setLoading(true);
+      const { data } = await supabase.from("family_goals").select("*").order("created_at", { ascending: false });
+      if (data) setGoals(data as FamilyGoal[]);
+      setLoading(false);
+    }
+    loadData();
   }, []);
 
-  const handleContributeClick = (goal: any) => {
+  const handleContributeClick = (goal: FamilyGoal) => {
     setSelectedGoal(goal);
     setAmount("");
     setShowContributeModal(true);
@@ -35,7 +40,7 @@ export default function GoalsPage() {
 
   const submitContribution = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) return;
+    if (!selectedGoal || !amount || isNaN(Number(amount)) || Number(amount) <= 0) return;
     
     setIsSubmitting(true);
     try {
@@ -56,15 +61,15 @@ export default function GoalsPage() {
       }
       
       setShowContributeModal(false);
-      fetchGoals();
-    } catch (e) {
+      refreshGoals();
+    } catch {
       alert("Gagal memproses patungan.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCairkan = async (goal: any) => {
+  const handleCairkan = async (goal: FamilyGoal) => {
     if (goal.current_amount <= 0) {
       alert("Dana patungan masih kosong.");
       return;
@@ -75,8 +80,8 @@ export default function GoalsPage() {
     try {
       await supabase.from("family_goals").update({ current_amount: 0 }).eq("id", goal.id);
       alert("Dana berhasil dicairkan (ditarik) oleh Super Admin.");
-      fetchGoals();
-    } catch (e) {
+      refreshGoals();
+    } catch {
       alert("Gagal mencairkan dana.");
     }
   };

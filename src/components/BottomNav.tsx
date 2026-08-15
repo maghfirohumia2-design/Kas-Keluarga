@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListOrdered, User, ArrowLeftRight, Gift, Target } from "lucide-react";
+import { ArrowLeftRight, Gift, Target } from "lucide-react";
 
 import Image from "next/image";
 

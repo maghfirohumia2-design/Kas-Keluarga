@@ -4,57 +4,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Wallet, 
-  Home as HomeIcon, 
-  Briefcase, 
-  GraduationCap, 
-  Car,
-  ShoppingBag,
-  Coins,
-  Monitor,
-  ClipboardList,
-  ArrowRight,
-  Plus,
-  Loader2,
-  Eye,
-  EyeOff,
-  ArrowLeftRight,
-  TrendingUp,
-  TrendingDown,
   Settings
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
-// ... (other functions remain the same) ...
-
-// Fungsi warna icon per kas
-const getColorClassesForAccount = (name: string) => {
-  if (!name) return "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 group-hover:text-emerald-700 border-emerald-100/50";
-  const lowerName = name.toLowerCase();
-  
-  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) 
-    return "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 group-hover:text-emerald-700 border-emerald-100/50";
-    
-  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) 
-    return "bg-teal-50 text-teal-600 group-hover:bg-teal-100 group-hover:text-teal-700 border-teal-100/50";
-    
-  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv")) 
-    return "bg-blue-50 text-blue-600 group-hover:bg-blue-100 group-hover:text-blue-700 border-blue-100/50";
-    
-  if (lowerName.includes("kantor") || lowerName.includes("kerja")) 
-    return "bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100 group-hover:text-cyan-700 border-cyan-100/50";
-    
-  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) 
-    return "bg-orange-50 text-orange-600 group-hover:bg-orange-100 group-hover:text-orange-700 border-orange-100/50";
-    
-  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) 
-    return "bg-purple-50 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700 border-purple-100/50";
-    
-  if (lowerName.includes("belanja") || lowerName.includes("toko")) 
-    return "bg-pink-50 text-pink-600 group-hover:bg-pink-100 group-hover:text-pink-700 border-pink-100/50";
-    
-  return "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-700 border-slate-200/50";
-};
+import { Account } from "@/types/database";
 
 // Fungsi ikon per kas (Gambar 3D)
 const getIconForAccount = (name: string) => {
@@ -72,84 +26,54 @@ const getIconForAccount = (name: string) => {
 };
 
 export default function Home() {
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [balances, setBalances] = useState<Record<string, number>>({});
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [monthlyExpenses, setMonthlyExpenses] = useState<Record<string, number>>({});
-  const [totalBalance, setTotalBalance] = useState(0);
-  const [monthlyIncome, setMonthlyIncome] = useState(0);
-  const [monthlyExpenseTotal, setMonthlyExpenseTotal] = useState(0);
-  const [showTotal, setShowTotal] = useState(false);
   const [accountsError, setAccountsError] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string>("My Family");
-  
   const [loading, setLoading] = useState(true);
 
-  async function fetchData() {
-    setLoading(true);
-    const { data: accountsData, error: accountsError } = await supabase
-      .from('accounts')
-      .select('*')
-      .order('created_at', { ascending: true });
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      const { data: accountsData, error: accError } = await supabase
+        .from('accounts')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-    const { data: transactions } = await supabase
-      .from('transactions')
-      .select('account_id, type, amount, created_at, is_transfer');
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('account_id, type, amount, created_at, is_transfer');
 
-    if (accountsError) {
-      setAccountsError(true);
-    } else {
-      setAccounts(accountsData || []);
-      
-      const newBalances: Record<string, number> = {};
-      const newMonthlyExpenses: Record<string, number> = {};
-      let newTotal = 0;
-      let mIncome = 0;
-      let mExpense = 0;
-      
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      
-      accountsData?.forEach(acc => { 
-        const initBal = Number(acc.initial_balance || 0);
-        newBalances[acc.id] = initBal; 
-        newMonthlyExpenses[acc.id] = 0;
-        newTotal += initBal;
-      });
-      
-      transactions?.forEach(tx => {
-        const amount = Number(tx.amount);
-        const txDate = new Date(tx.created_at);
-        const isCurrentMonth = txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+      if (accError) {
+        setAccountsError(true);
+      } else {
+        const accs = (accountsData || []) as Account[];
+        setAccounts(accs);
+        
+        const newMonthlyExpenses: Record<string, number> = {};
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        
+        accs.forEach(acc => { 
+          newMonthlyExpenses[acc.id] = 0;
+        });
+        
+        transactions?.forEach(tx => {
+          const amount = Number(tx.amount);
+          const txDate = new Date(tx.created_at);
+          const isCurrentMonth = txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
 
-        if (tx.type === 'income') {
-          newBalances[tx.account_id] = (newBalances[tx.account_id] || 0) + amount;
-          newTotal += amount;
-          // Hanya hitung income bukan transfer untuk statistik bulanan
-          if (isCurrentMonth && !tx.is_transfer) mIncome += amount;
-        } else if (tx.type === 'expense') {
-          newBalances[tx.account_id] = (newBalances[tx.account_id] || 0) - amount;
-          newTotal -= amount;
-          if (isCurrentMonth) {
-            // Hanya hitung expense bukan transfer untuk statistik bulanan
-            if (!tx.is_transfer) {
-              mExpense += amount;
-            }
+          if (tx.type === 'expense' && isCurrentMonth && !tx.is_transfer) {
             newMonthlyExpenses[tx.account_id] = (newMonthlyExpenses[tx.account_id] || 0) + amount;
           }
-        }
-      });
-      
-      setBalances(newBalances);
-      setMonthlyExpenses(newMonthlyExpenses);
-      setTotalBalance(newTotal);
-      setMonthlyIncome(mIncome);
-      setMonthlyExpenseTotal(mExpense);
+        });
+        
+        setMonthlyExpenses(newMonthlyExpenses);
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  }
 
-  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.user_metadata?.avatar_url) {
         setAvatarUrl(user.user_metadata.avatar_url);

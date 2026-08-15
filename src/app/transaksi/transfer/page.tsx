@@ -5,13 +5,14 @@ import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowLeftRight, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { Account } from "@/types/database";
 
 function TransferFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefillFromId = searchParams.get("fromId");
 
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [fromAccountId, setFromAccountId] = useState(prefillFromId || "");
   const [toAccountId, setToAccountId] = useState("");
   const [amount, setAmount] = useState("");
@@ -24,11 +25,12 @@ function TransferFormContent() {
     async function fetchData() {
       const { data } = await supabase.from("accounts").select("*").order("name");
       if (data && data.length > 0) {
-        setAccounts(data);
-        const initialFrom = prefillFromId || data[0].id;
+        const accs = data as Account[];
+        setAccounts(accs);
+        const initialFrom = prefillFromId || accs[0].id;
         setFromAccountId(initialFrom);
         // Find default "to" account different from "from"
-        const defaultTo = data.find((a: any) => a.id !== initialFrom)?.id || "";
+        const defaultTo = accs.find(a => a.id !== initialFrom)?.id || "";
         setToAccountId(defaultTo);
       }
 
@@ -43,7 +45,7 @@ function TransferFormContent() {
   const handleFromChange = (newFromId: string) => {
     setFromAccountId(newFromId);
     if (newFromId === toAccountId) {
-      const other = accounts.find((a: any) => a.id !== newFromId);
+      const other = accounts.find(a => a.id !== newFromId);
       if (other) setToAccountId(other.id);
     }
   };
@@ -133,7 +135,7 @@ function TransferFormContent() {
         router.push("/");
       }
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Gagal melakukan transfer:", error);
       alert("Terjadi kesalahan saat melakukan transfer.");
     } finally {

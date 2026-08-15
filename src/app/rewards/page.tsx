@@ -3,19 +3,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
-import { Gift, Coins, CheckCircle, XCircle, Plus, Loader2 } from "lucide-react";
+import { Gift, Coins, Plus, Loader2 } from "lucide-react";
+import { Reward, RewardClaim } from "@/types/database";
 
 export default function RewardsPage() {
-  const { profile, refreshProfile } = useAuth();
-  const [rewards, setRewards] = useState<any[]>([]);
-  const [claims, setClaims] = useState<any[]>([]);
+  const { profile } = useAuth();
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [claims, setClaims] = useState<RewardClaim[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const refreshData = async () => {
     // Fetch Rewards
     const { data: rData } = await supabase.from("rewards").select("*").order("points_cost", { ascending: true });
-    if (rData) setRewards(rData);
+    if (rData) setRewards(rData as Reward[]);
 
     // Fetch Claims
     if (profile?.role === "super_admin") {
@@ -24,23 +24,44 @@ export default function RewardsPage() {
         .select("*, profiles(full_name), rewards(title, points_cost)")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
-      if (cData) setClaims(cData);
+      if (cData) setClaims(cData as RewardClaim[]);
     } else if (profile?.id) {
       const { data: cData } = await supabase
         .from("reward_claims")
         .select("*, rewards(title, icon)")
         .eq("user_id", profile.id)
         .order("created_at", { ascending: false });
-      if (cData) setClaims(cData);
+      if (cData) setClaims(cData as RewardClaim[]);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    fetchData();
+    async function loadData() {
+      setLoading(true);
+      const { data: rData } = await supabase.from("rewards").select("*").order("points_cost", { ascending: true });
+      if (rData) setRewards(rData as Reward[]);
+
+      if (profile?.role === "super_admin") {
+        const { data: cData } = await supabase
+          .from("reward_claims")
+          .select("*, profiles(full_name), rewards(title, points_cost)")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+        if (cData) setClaims(cData as RewardClaim[]);
+      } else if (profile?.id) {
+        const { data: cData } = await supabase
+          .from("reward_claims")
+          .select("*, rewards(title, icon)")
+          .eq("user_id", profile.id)
+          .order("created_at", { ascending: false });
+        if (cData) setClaims(cData as RewardClaim[]);
+      }
+      setLoading(false);
+    }
+    loadData();
   }, [profile]);
 
-  const handleClaim = async (reward: any) => {
+  const handleClaim = async (reward: Reward) => {
     if (!profile) return;
     if (profile.points < reward.points_cost) {
       alert("Poin kamu tidak cukup!");
@@ -57,13 +78,13 @@ export default function RewardsPage() {
         status: "pending"
       });
       alert("Permintaan penukaran terkirim! Tunggu ACC ya.");
-      fetchData();
-    } catch (e) {
+      refreshData();
+    } catch {
       alert("Gagal menukar poin.");
     }
   };
 
-  const handleApprove = async (claim: any) => {
+  const handleApprove = async (claim: RewardClaim) => {
     try {
       const cost = claim.rewards?.points_cost || 0;
       // Potong poin user
@@ -71,18 +92,18 @@ export default function RewardsPage() {
       if (uData && uData.points >= cost) {
         await supabase.from("profiles").update({ points: uData.points - cost }).eq("id", claim.user_id);
         await supabase.from("reward_claims").update({ status: "approved" }).eq("id", claim.id);
-        fetchData();
+        refreshData();
       } else {
         alert("Poin user tidak cukup saat ini.");
       }
     } catch (e) {
-      console.error(e);
+      console.error("Gagal menyetujui klaim:", e);
     }
   };
 
   const handleReject = async (claimId: string) => {
     await supabase.from("reward_claims").update({ status: "rejected" }).eq("id", claimId);
-    fetchData();
+    refreshData();
   };
 
   if (loading) {

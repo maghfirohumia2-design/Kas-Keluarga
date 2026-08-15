@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { Transaction } from "@/types/database";
 
-export default function TransactionList({ initialTransactions }: { initialTransactions: any[] }) {
+export default function TransactionList({ initialTransactions }: { initialTransactions: Transaction[] }) {
   const { profile } = useAuth();
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMonth, setFilterMonth] = useState("");

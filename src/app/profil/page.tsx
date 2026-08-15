@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, HelpCircle, LogOut, Heart, UserCircle, Bell, KeyRound, Loader2, X, Camera, Edit2, Users, Plus, Wallet, Trash2, Tag } from "lucide-react";
+import { HelpCircle, LogOut, Heart, UserCircle, KeyRound, Loader2, X, Camera, Edit2, Users, Plus, Trash2, Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createUserAction, getUsersAction, deleteUserAction, updateUserAction, updateUserRoleAction } from "@/app/actions/admin";
 import { useAuth } from "@/components/AuthProvider";
+import { Account, AdminUser, UserRole } from "@/types/database";
 
 export default function ProfilPage() {
   const { profile } = useAuth();
   const [phone, setPhone] = useState<string | null>("Memuat...");
   const [fullName, setFullName] = useState<string>("My Profile");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   
   // State untuk modal tambah Kas
   const [showAddKas, setShowAddKas] = useState(false);
@@ -57,16 +57,14 @@ export default function ProfilPage() {
 
   // State Admin: Lihat Anggota
   const [showMembersModal, setShowMembersModal] = useState(false);
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<AdminUser[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   
   const [editMemberId, setEditMemberId] = useState<string | null>(null);
   const [editMemberName, setEditMemberName] = useState("");
   const [editMemberPhone, setEditMemberPhone] = useState("");
   const [editMemberPin, setEditMemberPin] = useState("");
-  const [editMemberRole, setEditMemberRole] = useState("member");
-
-  const router = useRouter();
+  const [editMemberRole, setEditMemberRole] = useState<UserRole>("member");
 
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,7 +113,7 @@ export default function ProfilPage() {
 
       setFullName(tempName);
       setIsEditingProfile(false);
-    } catch (error) {
+    } catch {
       alert("Gagal menyimpan nama.");
     } finally {
       setUploadingImage(false);
@@ -152,8 +150,9 @@ export default function ProfilPage() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
-    } catch (error: any) {
-      alert("Gagal mengunggah foto: " + error.message);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan.";
+      alert("Gagal mengunggah foto: " + msg);
     } finally {
       setUploadingImage(false);
     }
@@ -212,7 +211,7 @@ export default function ProfilPage() {
       setPinStep("new");
       setPinMessage(null);
       setTimeout(() => pinInputRefs.current[0]?.focus(), 100);
-    } catch (error: any) {
+    } catch {
       setOldPin(["", "", "", "", "", ""]);
       pinInputRefs.current[0]?.focus();
       setPinMessage({ text: "PIN lama tidak sesuai.", type: "error" });
@@ -258,10 +257,11 @@ export default function ProfilPage() {
         setPinStep("old");
         setPinMessage(null);
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setPin(["", "", "", "", "", ""]);
       pinInputRefs.current[0]?.focus();
-      setPinMessage({ text: error.message || "Gagal mengubah PIN.", type: "error" });
+      const msg = error instanceof Error ? error.message : "Gagal mengubah PIN.";
+      setPinMessage({ text: msg, type: "error" });
     } finally {
       setLoadingPin(false);
     }
@@ -292,7 +292,7 @@ export default function ProfilPage() {
           setAddUserMessage(null);
         }, 2000);
       }
-    } catch (err: any) {
+    } catch {
       setAddUserMessage({ text: "Terjadi kesalahan sistem, silahkan coba lagi.", type: "error" });
     } finally {
       setAddUserLoading(false);
@@ -304,7 +304,7 @@ export default function ProfilPage() {
     setLoadingMembers(true);
     const token = await getAccessToken();
     const res = await getUsersAction(token);
-    if (res.success) {
+    if (res.success && res.users) {
       setMembers(res.users);
     } else {
       alert(res.error || "Gagal memuat daftar anggota");
@@ -320,7 +320,7 @@ export default function ProfilPage() {
       if (res.error) alert(res.error);
       else {
         const refresh = await getUsersAction(token);
-        if (refresh.success) setMembers(refresh.users);
+        if (refresh.success && refresh.users) setMembers(refresh.users);
       }
       setLoadingMembers(false);
     }
@@ -339,14 +339,14 @@ export default function ProfilPage() {
       }
       setEditMemberId(null);
       const refresh = await getUsersAction(token);
-      if (refresh.success) setMembers(refresh.users);
+      if (refresh.success && refresh.users) setMembers(refresh.users);
     }
     setLoadingMembers(false);
   };
 
   const fetchAccountsList = async () => {
     const { data } = await supabase.from('accounts').select('*').order('created_at', { ascending: true });
-    if (data) setAccounts(data);
+    if (data) setAccounts(data as Account[]);
   };
 
   const handleAddKas = async (e: React.FormEvent) => {
@@ -389,7 +389,7 @@ export default function ProfilPage() {
         setEditKasMessage(null);
         fetchAccountsList();
       }, 1500);
-    } catch (err: any) {
+    } catch {
       setEditKasMessage({ text: "Gagal mengubah nama Kas.", type: "error" });
     } finally {
       setIsEditingKasLoading(false);
@@ -448,8 +448,9 @@ export default function ProfilPage() {
         fetchAccountsList();
       }, 1500);
 
-    } catch (err: any) {
-      setDeleteKasMessage({ text: err.message || "Gagal menghapus Kas.", type: "error" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal menghapus Kas.";
+      setDeleteKasMessage({ text: msg, type: "error" });
     } finally {
       setIsDeletingKasLoading(false);
     }

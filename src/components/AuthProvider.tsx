@@ -4,10 +4,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { Session } from "@supabase/supabase-js";
+import { UserProfile } from "@/types/database";
 
 interface AuthContextType {
-  session: any;
-  profile: any;
+  session: Session | null;
+  profile: UserProfile | null;
   refreshProfile: () => Promise<void>;
 }
 
@@ -19,8 +21,8 @@ export function useAuth() {
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 

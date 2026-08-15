@@ -2,17 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Plus, Trash2, Edit2, Loader2, Tag, Save, X, CheckCircle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit2, Loader2, Save, X, CheckCircle } from "lucide-react";
 import Link from "next/link";
-
-type Category = {
-  id: string;
-  name: string;
-  icon: string;
-  type: "income" | "expense";
-  bg_class: string;
-  text_class: string;
-};
+import { Category } from "@/types/database";
 
 const COLOR_PRESETS = [
   { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", name: "Emerald" },
@@ -42,23 +34,34 @@ export default function KategoriPage() {
   const [formColorIndex, setFormColorIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
+  const refreshCategories = async () => {
+    const { data } = await supabase
       .from("categories")
       .select("*")
       .order("type", { ascending: true })
       .order("name", { ascending: true });
       
-    if (data && !error) {
-      setCategories(data);
+    if (data) {
+      setCategories(data as Category[]);
     }
-    setLoading(false);
   };
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .order("type", { ascending: true })
+        .order("name", { ascending: true });
+        
+      if (data) {
+        setCategories(data as Category[]);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
   const handleOpenModal = (cat?: Category) => {
     if (cat) {
@@ -100,9 +103,9 @@ export default function KategoriPage() {
       } else {
         await supabase.from("categories").insert([payload]);
       }
-      await fetchCategories();
+      await refreshCategories();
       setShowModal(false);
-    } catch (error) {
+    } catch {
       alert("Gagal menyimpan kategori");
     } finally {
       setIsSaving(false);

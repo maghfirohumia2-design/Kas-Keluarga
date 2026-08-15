@@ -4,23 +4,22 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   ArrowLeft, 
-  TrendingUp, 
-  TrendingDown, 
   Wallet,
-  History,
   AlertCircle,
   Eye,
   EyeOff,
+  TrendingUp,
+  TrendingDown,
+  History,
   Plus,
   ArrowLeftRight,
-  Tag,
   PieChart,
   Search
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
+import { Account, Transaction, Category } from "@/types/database";
 
 const getGradientForAccount = (name: string) => {
   if (!name) return "from-emerald-500 to-teal-500";
@@ -39,13 +38,13 @@ export default function KasDashboardPage() {
   const router = useRouter();
   const accountId = params.id as string;
 
-  const [account, setAccount] = useState<any>(null);
+  const [account, setAccount] = useState<Account | null>(null);
   const [balance, setBalance] = useState<number>(0);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [selectedTx, setSelectedTx] = useState<any>(null);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -128,7 +127,7 @@ export default function KasDashboardPage() {
     
     const { error } = await supabase.from('accounts').update({ budget_limit: newLimit }).eq('id', accountId);
     if (!error) {
-      setAccount({ ...account, budget_limit: newLimit });
+      setAccount(prev => (prev ? { ...prev, budget_limit: newLimit } : null));
       setShowBudgetModal(false);
     } else {
       alert("Gagal menyimpan target budget");
@@ -172,7 +171,7 @@ export default function KasDashboardPage() {
   });
 
   // Kelompokkan transaksi berdasarkan tanggal
-  const groupedTransactions = filteredTxList.reduce((groups: any, tx: any) => {
+  const groupedTransactions = filteredTxList.reduce<Record<string, Transaction[]>>((groups, tx) => {
     const dateStr = new Date(tx.created_at).toLocaleDateString('id-ID', {
       day: 'numeric', month: 'long', year: 'numeric'
     });
@@ -291,7 +290,7 @@ export default function KasDashboardPage() {
           const currentMonth = new Date().getMonth();
           const currentYear = new Date().getFullYear();
           const catMap: Record<string, number> = {};
-          transactions.forEach((tx: any) => {
+          transactions.forEach((tx: Transaction) => {
             if (tx.type === 'expense' && tx.category && !tx.is_transfer) {
               const d = new Date(tx.created_at);
               if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
@@ -387,7 +386,7 @@ export default function KasDashboardPage() {
                 {date}
               </h4>
               <div className="space-y-2.5">
-                {groupedTransactions[date].map((tx: any) => (
+                {groupedTransactions[date].map((tx: Transaction) => (
                   <div 
                     key={tx.id} 
                     onClick={() => setSelectedTx(tx)}
@@ -486,7 +485,7 @@ export default function KasDashboardPage() {
                   onClick={async () => {
                     if (confirm("Yakin ingin menghapus transaksi ini?")) {
                       setIsDeleting(true);
-                      let error: any = null;
+                      let error: { message: string } | null = null;
                       try {
                         if (selectedTx.is_transfer || selectedTx.linked_tx_id) {
                           const filterQuery = selectedTx.linked_tx_id 
@@ -529,8 +528,9 @@ export default function KasDashboardPage() {
                         } else {
                           alert("Gagal menghapus transaksi: " + (error.message || "Terjadi kesalahan."));
                         }
-                      } catch (err: any) {
-                        alert("Gagal menghapus transaksi: " + (err.message || "Terjadi kesalahan."));
+                      } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : "Terjadi kesalahan.";
+                        alert("Gagal menghapus transaksi: " + msg);
                       } finally {
                         setIsDeleting(false);
                         setSelectedTx(null);

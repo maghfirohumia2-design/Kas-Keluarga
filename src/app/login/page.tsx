@@ -17,8 +17,7 @@ export default function LoginPage() {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
-  const [isLogin, setIsLogin] = useState(true);
+  }, [slides.length]);
   const [step, setStep] = useState<1 | 2>(1);
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState<string[]>(["", "", "", "", "", ""]);
@@ -125,10 +124,11 @@ export default function LoginPage() {
         setPin(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setPin(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
-      setMessage({ text: error.message || "Terjadi kesalahan.", type: "error" });
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan.";
+      setMessage({ text: msg, type: "error" });
     } finally {
       setLoading(false);
     }

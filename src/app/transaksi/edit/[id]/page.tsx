@@ -3,9 +3,10 @@
 import { useState, useEffect, use, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Receipt, Printer, Tag, CheckCircle } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Receipt, Tag, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Account, Category, Transaction, TransactionType } from "@/types/database";
 
 function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -13,10 +14,10 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const returnTo = searchParams.get("returnTo");
   const { id } = use(params);
   
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<TransactionType>("expense");
   const [category, setCategory] = useState<string>("");
-  const [dbCategories, setDbCategories] = useState<any[]>([]);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -28,7 +29,6 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const [userName, setUserName] = useState<string>("");
   
   const [linkedTxId, setLinkedTxId] = useState<string | null>(null);
-  const [isTransfer, setIsTransfer] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [initialFetchLoading, setInitialFetchLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -40,35 +40,35 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
       // Fetch accounts
       const { data: accData } = await supabase.from("accounts").select("*").order("name");
       if (accData) {
-        setAccounts(accData);
+        setAccounts(accData as Account[]);
       }
 
       // Fetch categories
       const { data: catData } = await supabase.from("categories").select("*").order("name");
       if (catData) {
-        setDbCategories(catData);
+        setDbCategories(catData as Category[]);
       }
 
       // Fetch transaction
       const { data: txData } = await supabase.from("transactions").select("*").eq("id", id).single();
       if (txData) {
-        setType(txData.type);
+        const tx = txData as Transaction;
+        setType(tx.type);
         
-        let txCategory = txData.category;
+        let txCategory = tx.category;
         if (!txCategory && catData) {
-          const defaultCats = catData.filter(c => c.type === txData.type);
+          const defaultCats = (catData as Category[]).filter(c => c.type === tx.type);
           if (defaultCats.length > 0) txCategory = defaultCats[0].name;
         }
         setCategory(txCategory || "");
         
-        setAccountId(txData.account_id);
-        setAmount(txData.amount.toLocaleString("id-ID"));
-        setDescription(txData.description);
-        setExistingReceipt(txData.receipt_url);
-        setCreatedAt(txData.created_at);
-        setUserName(txData.user_name || "Admin");
-        setLinkedTxId(txData.linked_tx_id || null);
-        setIsTransfer(txData.is_transfer || false);
+        setAccountId(tx.account_id);
+        setAmount(tx.amount.toLocaleString("id-ID"));
+        setDescription(tx.description);
+        setExistingReceipt(tx.receipt_url || null);
+        setCreatedAt(tx.created_at);
+        setUserName(tx.user_name || "Admin");
+        setLinkedTxId(tx.linked_tx_id || null);
       }
       
       setInitialFetchLoading(false);

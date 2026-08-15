@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Lock, Tag, CheckCircle } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Tag, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { Account, Category, TransactionType } from "@/types/database";
 
 function TransactionFormContent() {
   const router = useRouter();
@@ -12,10 +13,10 @@ function TransactionFormContent() {
   const prefillAccountId = searchParams.get("accountId");
   const prefillType = searchParams.get("type");
 
-  const [type, setType] = useState<"income" | "expense">((prefillType as "income" | "expense") || "expense");
+  const [type, setType] = useState<TransactionType>((prefillType as TransactionType) || "expense");
   const [category, setCategory] = useState<string>("");
-  const [dbCategories, setDbCategories] = useState<any[]>([]);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState(prefillAccountId || "");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -30,15 +31,17 @@ function TransactionFormContent() {
     async function fetchData() {
       const { data: accData } = await supabase.from("accounts").select("*").order("name");
       if (accData) {
-        setAccounts(accData);
-        if (!prefillAccountId && accData.length > 0) setAccountId(accData[0].id);
+        const accs = accData as Account[];
+        setAccounts(accs);
+        if (!prefillAccountId && accs.length > 0) setAccountId(accs[0].id);
       }
 
       const { data: catData } = await supabase.from("categories").select("*").order("name");
       if (catData) {
-        setDbCategories(catData);
+        const cats = catData as Category[];
+        setDbCategories(cats);
         // Set initial category based on type
-        const filtered = catData.filter(c => c.type === (prefillType || "expense"));
+        const filtered = cats.filter(c => c.type === (prefillType || "expense"));
         if (filtered.length > 0) setCategory(filtered[0].name);
       }
 
@@ -48,7 +51,7 @@ function TransactionFormContent() {
       }
     }
     fetchData();
-  }, [prefillAccountId]);
+  }, [prefillAccountId, prefillType]);
 
   const handleReview = (e: React.FormEvent) => {
     e.preventDefault();

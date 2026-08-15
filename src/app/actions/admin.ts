@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { AdminUser, UserProfile, UserRole } from "@/types/database";
 
 // Menggunakan Service Role Key agar punya akses Admin untuk membuat user
 // dan mem-bypass Row Level Security (RLS) jika ada.
@@ -75,13 +76,14 @@ export async function createUserAction(accessToken: string, phone: string, pin: 
     }
 
     return { success: true, userId: data.user.id };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan sistem.";
     console.error("Create user exception:", err);
-    return { error: err.message || "Terjadi kesalahan sistem." };
+    return { error: errorMessage };
   }
 }
 
-export async function getUsersAction(accessToken: string) {
+export async function getUsersAction(accessToken: string): Promise<{ success?: boolean; users?: AdminUser[]; error?: string }> {
   try {
     const authCheck = await verifySuperAdmin(accessToken);
     if (!authCheck.authorized) return { error: authCheck.error };
@@ -92,26 +94,28 @@ export async function getUsersAction(accessToken: string) {
     if (error) return { error: error.message };
 
     const { data: profiles } = await supabaseAdmin.from('profiles').select('*');
+    const profileList = (profiles || []) as UserProfile[];
     
     // Format the response nicely
-    const users = (data?.users || []).map(u => {
+    const users: AdminUser[] = (data?.users || []).map(u => {
       const phoneOnly = u.email ? u.email.replace("hp_", "").replace("@kaskeluarga.com", "") : "";
-      const p = profiles?.find(p => p.id === u.id) || {};
+      const p = profileList.find(p => p.id === u.id);
       
       return {
         id: u.id,
         phone: phoneOnly,
-        fullName: p.full_name || u.user_metadata?.full_name || "Tanpa Nama",
-        role: p.role || 'member',
-        points: p.points || 0,
+        fullName: p?.full_name || (u.user_metadata?.full_name as string) || "Tanpa Nama",
+        role: (p?.role || 'member') as UserRole,
+        points: p?.points || 0,
         createdAt: u.created_at
-      }
+      };
     });
 
     return { success: true, users };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan sistem saat mengambil data.";
     console.error("Get users exception:", err);
-    return { error: err.message || "Terjadi kesalahan sistem saat mengambil data." };
+    return { error: errorMessage };
   }
 }
 
@@ -126,9 +130,10 @@ export async function deleteUserAction(accessToken: string, userId: string) {
     if (error) return { error: error.message };
     
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Gagal menghapus user.";
     console.error("Delete user exception:", err);
-    return { error: err.message || "Gagal menghapus user." };
+    return { error: errorMessage };
   }
 }
 
@@ -141,7 +146,7 @@ export async function updateUserAction(accessToken: string, userId: string, phon
     if (!phone || phone.length < 10) return { error: "Nomor HP tidak valid." };
     if (!fullName) return { error: "Nama pengguna harus diisi." };
     
-    const updatePayload: any = {
+    const updatePayload: { email: string; user_metadata: { full_name: string }; password?: string } = {
       email: `hp_${phone}@kaskeluarga.com`,
       user_metadata: { full_name: fullName }
     };
@@ -160,9 +165,10 @@ export async function updateUserAction(accessToken: string, userId: string, phon
     }
     
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Gagal memperbarui user.";
     console.error("Update user exception:", err);
-    return { error: err.message || "Gagal memperbarui user." };
+    return { error: errorMessage };
   }
 }
 
@@ -177,9 +183,11 @@ export async function updateUserRoleAction(accessToken: string, userId: string, 
     if (error) return { error: error.message };
     
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Gagal memperbarui role.";
     console.error("Update role exception:", err);
-    return { error: err.message || "Gagal memperbarui role." };
+    return { error: errorMessage };
   }
 }
+
 
