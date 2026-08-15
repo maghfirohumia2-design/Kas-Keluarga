@@ -146,3 +146,41 @@ export function RewardsSkeleton() {
     </div>
   );
 }
+
+/**
+ * Skeleton Loader untuk Halaman Laporan Keuangan
+ */
+export function LaporanSkeleton() {
+  return (
+    <div className="p-6 pb-28 min-h-screen bg-slate-50 space-y-5">
+      {/* Header */}
+      <div className="flex justify-between items-center pt-2">
+        <div className="space-y-1.5">
+          <Skeleton className="w-36 h-7" />
+          <Skeleton className="w-48 h-3" />
+        </div>
+        <Skeleton className="w-24 h-9 rounded-2xl" />
+      </div>
+
+      {/* Filter Bar */}
+      <Skeleton className="w-full h-24 rounded-3xl" />
+
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Skeleton className="h-24 rounded-3xl" />
+        <Skeleton className="h-24 rounded-3xl" />
+        <Skeleton className="h-24 rounded-3xl" />
+        <Skeleton className="h-24 rounded-3xl" />
+      </div>
+
+      {/* Trend Chart */}
+      <Skeleton className="w-full h-56 rounded-3xl" />
+
+      {/* Distribution */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Skeleton className="h-60 rounded-3xl" />
+        <Skeleton className="h-60 rounded-3xl" />
+      </div>
+    </div>
+  );
+}

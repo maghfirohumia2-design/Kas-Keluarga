@@ -13,6 +13,7 @@ import {
   Plus,
   ArrowLeftRight,
   Search,
+  BarChart3,
   X
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -222,14 +223,24 @@ export default function KasDashboardPage() {
           </div>
         </div>
 
-        <Link
-          href="/transaksi/transfer"
-          className="p-2.5 bg-white border border-slate-200/80 rounded-2xl text-slate-600 hover:text-emerald-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold"
-          title="Transfer Antar Kas"
-        >
-          <ArrowLeftRight size={15} />
-          <span className="hidden sm:inline">Transfer</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/laporan?accountId=${accountId}`}
+            className="p-2.5 bg-white border border-slate-200/80 rounded-2xl text-slate-600 hover:text-blue-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold"
+            title="Laporan & Ekspor Kas Ini"
+          >
+            <BarChart3 size={15} />
+            <span className="hidden sm:inline">Laporan</span>
+          </Link>
+          <Link
+            href="/transaksi/transfer"
+            className="p-2.5 bg-white border border-slate-200/80 rounded-2xl text-slate-600 hover:text-emerald-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold"
+            title="Transfer Antar Kas"
+          >
+            <ArrowLeftRight size={15} />
+            <span className="hidden sm:inline">Transfer</span>
+          </Link>
+        </div>
       </header>
 
       {/* Main Content Grid */}

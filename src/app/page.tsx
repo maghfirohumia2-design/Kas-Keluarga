@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Wallet, 
-  Settings
+  Settings,
+  BarChart3
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -104,7 +105,18 @@ export default function Home() {
               <p className="text-sm text-emerald-50 font-medium opacity-90 truncate">Selalu Sehat dan Bahagia</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <Link href="/profil" className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors backdrop-blur-sm shadow-sm border border-white/20">
+              <Link 
+                href="/laporan" 
+                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors backdrop-blur-sm shadow-sm border border-white/20"
+                title="Laporan & Analisis Keuangan"
+              >
+                <BarChart3 size={20} />
+              </Link>
+              <Link 
+                href="/profil" 
+                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors backdrop-blur-sm shadow-sm border border-white/20"
+                title="Pengaturan Profil"
+              >
                 <Settings size={20} />
               </Link>
               <Link href="/profil" className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-xl shadow-lg border-[3px] border-emerald-300/50 overflow-hidden relative transition-transform hover:scale-105 active:scale-95">
@@ -179,6 +191,26 @@ export default function Home() {
                   )}
                 </Link>
               ))}
+            </div>
+
+            {/* Quick Analytics & Report Banner */}
+            <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                  <BarChart3 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-black text-slate-800">Laporan & Ekspor Arus Kas</h3>
+                  <p className="text-[10px] text-slate-400 font-medium">Analisis tren, cetak PDF, atau unduh data Excel / CSV</p>
+                </div>
+              </div>
+
+              <Link
+                href="/laporan"
+                className="px-3.5 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm border border-blue-200"
+              >
+                Buka Laporan
+              </Link>
             </div>
 
             {(!accounts || accounts.length === 0) && !accountsError && (

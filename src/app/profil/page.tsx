@@ -11,7 +11,8 @@ import {
   Shield, 
   Tags, 
   Wallet, 
-  UserPlus
+  UserPlus,
+  BarChart3
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
@@ -183,6 +184,30 @@ export default function ProfilPage() {
             </div>
           </div>
         )}
+
+        {/* Section: Laporan & Arsip Data (Untuk Semua Anggota) */}
+        <div>
+          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
+            Laporan & Pembukuan
+          </h3>
+          <div className="bg-white rounded-3xl p-2 border border-slate-100 shadow-sm space-y-1">
+            <Link
+              href="/laporan"
+              className="w-full p-3.5 flex items-center justify-between rounded-2xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <BarChart3 size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Laporan & Ekspor Arus Kas</h4>
+                  <p className="text-[11px] text-slate-400">Analisis tren, cetak PDF, atau unduh CSV/Excel</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300" />
+            </Link>
+          </div>
+        </div>
 
         {/* Section: Keluar Akun */}
         <div className="pt-2">
