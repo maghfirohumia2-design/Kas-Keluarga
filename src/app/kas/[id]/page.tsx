@@ -13,7 +13,6 @@ import {
   Plus,
   ArrowLeftRight,
   Search,
-  Loader2,
   X
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +25,7 @@ import KasHeaderCard from "@/components/kas/KasHeaderCard";
 import BudgetProgressCard from "@/components/kas/BudgetProgressCard";
 import CategoryExpenseCard from "@/components/kas/CategoryExpenseCard";
 import TransactionDetailModal from "@/components/kas/TransactionDetailModal";
+import { KasDetailSkeleton } from "@/components/ui/Skeleton";
 
 export default function KasDashboardPage() {
   const { profile } = useAuth();
@@ -154,12 +154,7 @@ export default function KasDashboardPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50">
-        <Loader2 className="animate-spin text-emerald-500 mb-3" size={36} />
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memuat Dashboard Kas...</p>
-      </div>
-    );
+    return <KasDetailSkeleton />;
   }
 
   if (error || !account) {

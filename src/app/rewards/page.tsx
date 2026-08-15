@@ -7,7 +7,6 @@ import {
   Gift, 
   Coins, 
   Plus, 
-  Loader2, 
   CheckCircle2, 
   XCircle, 
   Clock, 
@@ -15,9 +14,11 @@ import {
   Edit3, 
   Trash2, 
   X,
-  ShoppingBag
+  ShoppingBag,
+  Loader2
 } from "lucide-react";
 import { Reward, RewardClaim } from "@/types/database";
+import { RewardsSkeleton } from "@/components/ui/Skeleton";
 
 const PRESET_REWARD_ICONS = ["🎁", "🍦", "🧋", "🎮", "🍕", "🎬", "🎟️", "🧸", "👟", "🍰", "🍔", "🍫", "🍩", "📚"];
 
@@ -39,11 +40,9 @@ export default function RewardsPage() {
   const [activeTab, setActiveTab] = useState<"catalog" | "claims">("catalog");
 
   const refreshData = async () => {
-    // Fetch Rewards
     const { data: rData } = await supabase.from("rewards").select("*").order("points_cost", { ascending: true });
     if (rData) setRewards(rData as Reward[]);
 
-    // Fetch Claims
     if (profile?.role === "super_admin") {
       const { data: cData } = await supabase
         .from("reward_claims")
@@ -113,7 +112,6 @@ export default function RewardsPage() {
     setIsSavingReward(true);
     try {
       if (editingReward) {
-        // Update Reward
         const { error } = await supabase
           .from("rewards")
           .update({
@@ -126,7 +124,6 @@ export default function RewardsPage() {
         if (error) throw error;
         alert("Hadiah berhasil diperbarui!");
       } else {
-        // Create Reward
         const { error } = await supabase
           .from("rewards")
           .insert({
@@ -192,7 +189,6 @@ export default function RewardsPage() {
     try {
       const cost = claim.rewards?.points_cost || 0;
       
-      // Ambil data poin terkini pengguna
       const { data: uData, error: uError } = await supabase
         .from("profiles")
         .select("points")
@@ -209,7 +205,6 @@ export default function RewardsPage() {
         return;
       }
 
-      // Potong poin pengguna
       const { error: deductError } = await supabase
         .from("profiles")
         .update({ points: uData.points - cost })
@@ -217,7 +212,6 @@ export default function RewardsPage() {
 
       if (deductError) throw deductError;
 
-      // Update status klaim menjadi approved
       const { error: claimError } = await supabase
         .from("reward_claims")
         .update({ status: "approved" })
@@ -249,12 +243,7 @@ export default function RewardsPage() {
   const pendingClaimsCount = claims.filter(c => c.status === "pending").length;
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50">
-        <Loader2 className="animate-spin text-pink-500 mb-3" size={36} />
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Membuka Toko Keluarga...</p>
-      </div>
-    );
+    return <RewardsSkeleton />;
   }
 
   return (
@@ -342,7 +331,6 @@ export default function RewardsPage() {
                   key={reward.id} 
                   className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between items-center text-center group hover:border-pink-200 hover:shadow-md transition-all duration-300 relative overflow-hidden"
                 >
-                  {/* Action Edit/Delete for Admin */}
                   {profile?.role === "super_admin" && (
                     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button 
@@ -460,7 +448,6 @@ export default function RewardsPage() {
                 </div>
               </div>
 
-              {/* Action Buttons for Super Admin on Pending Claims */}
               {profile?.role === "super_admin" && claim.status === "pending" && (
                 <div className="flex gap-2 pt-2 border-t border-slate-100 mt-3">
                   <button 
@@ -512,7 +499,6 @@ export default function RewardsPage() {
             </div>
 
             <form onSubmit={handleSaveReward} className="space-y-4">
-              {/* Judul Hadiah */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nama Hadiah
@@ -527,7 +513,6 @@ export default function RewardsPage() {
                 />
               </div>
 
-              {/* Biaya Poin */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Biaya Poin untuk Menukar
@@ -542,7 +527,6 @@ export default function RewardsPage() {
                 />
               </div>
 
-              {/* Pilihan Icon */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Pilih Ikon Hadiah

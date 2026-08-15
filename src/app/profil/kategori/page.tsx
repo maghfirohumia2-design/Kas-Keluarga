@@ -185,8 +185,22 @@ export default function KategoriPage() {
       </header>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-emerald-500" size={32} />
+        <div className="space-y-4">
+          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+            <div className="animate-shimmer w-36 h-4 rounded-xl bg-slate-200" />
+            <div className="space-y-2">
+              <div className="animate-shimmer w-full h-14 rounded-2xl bg-slate-200" />
+              <div className="animate-shimmer w-full h-14 rounded-2xl bg-slate-200" />
+              <div className="animate-shimmer w-full h-14 rounded-2xl bg-slate-200" />
+            </div>
+          </div>
+          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+            <div className="animate-shimmer w-36 h-4 rounded-xl bg-slate-200" />
+            <div className="space-y-2">
+              <div className="animate-shimmer w-full h-14 rounded-2xl bg-slate-200" />
+              <div className="animate-shimmer w-full h-14 rounded-2xl bg-slate-200" />
+            </div>
+          </div>
         </div>
       ) : (
         <>

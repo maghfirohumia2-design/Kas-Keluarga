@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { Account } from "@/types/database";
+import { HomeDashboardSkeleton } from "@/components/ui/Skeleton";
 
 // Fungsi ikon per kas (Gambar 3D)
 const getIconForAccount = (name: string) => {
@@ -85,6 +86,10 @@ export default function Home() {
 
     fetchData();
   }, []);
+
+  if (loading) {
+    return <HomeDashboardSkeleton />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 overflow-x-hidden">

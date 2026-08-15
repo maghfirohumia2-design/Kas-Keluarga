@@ -17,6 +17,8 @@ import {
   Trophy
 } from "lucide-react";
 import { FamilyGoal, Account } from "@/types/database";
+import { formatRupiah, formatNumberInput, parseNumberInput } from "@/lib/format";
+import { GoalsSkeleton } from "@/components/ui/Skeleton";
 
 const PRESET_ICONS = ["🎯", "🏖️", "🎮", "🚗", "📱", "🐮", "🏠", "🚲", "💻", "🎒", "✈️", "👟"];
 
@@ -103,7 +105,7 @@ export default function GoalsPage() {
 
   const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const numTarget = parseFloat(goalTarget.replace(/\D/g, "")) || 0;
+    const numTarget = parseNumberInput(goalTarget);
     if (!goalTitle.trim() || numTarget <= 0) {
       alert("Mohon isi judul dan nominal target yang valid!");
       return;
@@ -112,7 +114,6 @@ export default function GoalsPage() {
     setIsSavingGoal(true);
     try {
       if (editingGoal) {
-        // Update Goal
         const { error } = await supabase
           .from("family_goals")
           .update({
@@ -125,7 +126,6 @@ export default function GoalsPage() {
         if (error) throw error;
         alert("Target patungan berhasil diperbarui!");
       } else {
-        // Create Goal
         const { error } = await supabase
           .from("family_goals")
           .insert({
@@ -173,7 +173,7 @@ export default function GoalsPage() {
   const submitContribution = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedGoal) return;
-    const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+    const numAmount = parseNumberInput(amount);
     if (numAmount <= 0) {
       alert("Masukkan nominal patungan yang valid!");
       return;
@@ -219,12 +219,12 @@ export default function GoalsPage() {
             .from("profiles")
             .update({ points: (profile.points || 0) + bonusPoints })
             .eq("id", profile.id);
-          alert(`🎉 Hebat! Patungan Rp ${numAmount.toLocaleString("id-ID")} berhasil dicatat. Kamu mendapatkan +${bonusPoints} Poin Reward!`);
+          alert(`🎉 Hebat! Patungan ${formatRupiah(numAmount)} berhasil dicatat. Kamu mendapatkan +${bonusPoints} Poin Reward!`);
         } else {
-          alert(`✅ Patungan Rp ${numAmount.toLocaleString("id-ID")} berhasil dicatat!`);
+          alert(`✅ Patungan ${formatRupiah(numAmount)} berhasil dicatat!`);
         }
       } else {
-        alert(`✅ Patungan Rp ${numAmount.toLocaleString("id-ID")} berhasil dicatat!`);
+        alert(`✅ Patungan ${formatRupiah(numAmount)} berhasil dicatat!`);
       }
 
       setShowContributeModal(false);
@@ -256,7 +256,6 @@ export default function GoalsPage() {
     try {
       const cairkanAmount = cairkanGoal.current_amount;
 
-      // Jika disetor ke Kas/Dompet, catat transaksi pemasukan
       if (cairkanDestination === "account") {
         if (!cairkanAccountId) {
           alert("Pilih kas tujuan penyetoran!");
@@ -277,7 +276,6 @@ export default function GoalsPage() {
         if (txError) throw txError;
       }
 
-      // Reset saldo patungan menjadi 0
       const { error: goalError } = await supabase
         .from("family_goals")
         .update({ current_amount: 0 })
@@ -285,7 +283,7 @@ export default function GoalsPage() {
 
       if (goalError) throw goalError;
 
-      alert(`✅ Dana patungan sebesar Rp ${cairkanAmount.toLocaleString("id-ID")} berhasil dicairkan!`);
+      alert(`✅ Dana patungan sebesar ${formatRupiah(cairkanAmount)} berhasil dicairkan!`);
       setShowCairkanModal(false);
       refreshData();
     } catch {
@@ -296,12 +294,7 @@ export default function GoalsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50">
-        <Loader2 className="animate-spin text-orange-500 mb-3" size={36} />
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memuat Patungan...</p>
-      </div>
-    );
+    return <GoalsSkeleton />;
   }
 
   return (
@@ -354,7 +347,7 @@ export default function GoalsPage() {
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg line-clamp-1">{goal.title}</h3>
                     <p className="text-xs font-semibold text-orange-600">
-                      Terkumpul Rp {goal.current_amount.toLocaleString('id-ID')}
+                      Terkumpul {formatRupiah(goal.current_amount)}
                     </p>
                   </div>
                 </div>
@@ -383,12 +376,12 @@ export default function GoalsPage() {
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-4 border border-slate-100">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target Total</p>
-                  <p className="text-sm font-black text-slate-800">Rp {goal.target_amount.toLocaleString('id-ID')}</p>
+                  <p className="text-sm font-black text-slate-800">{formatRupiah(goal.target_amount)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kekurangan</p>
                   <p className={`text-sm font-black ${isReached ? 'text-emerald-600' : 'text-slate-700'}`}>
-                    {isReached ? 'Lunas / Penuh' : `Rp ${sisaNominal.toLocaleString('id-ID')}`}
+                    {isReached ? 'Lunas / Penuh' : formatRupiah(sisaNominal)}
                   </p>
                 </div>
               </div>
@@ -480,7 +473,6 @@ export default function GoalsPage() {
             </div>
 
             <form onSubmit={handleSaveGoal} className="space-y-4">
-              {/* Judul Target */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nama Target / Impian
@@ -495,7 +487,6 @@ export default function GoalsPage() {
                 />
               </div>
 
-              {/* Target Nominal */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nominal Target (Rp)
@@ -504,16 +495,12 @@ export default function GoalsPage() {
                   type="text"
                   required
                   value={goalTarget}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    setGoalTarget(val ? Number(val).toLocaleString("id-ID") : "");
-                  }}
+                  onChange={(e) => setGoalTarget(formatNumberInput(e.target.value))}
                   placeholder="0"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
                 />
               </div>
 
-              {/* Pilihan Icon */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Pilih Ikon Target
@@ -580,7 +567,6 @@ export default function GoalsPage() {
             </p>
 
             <form onSubmit={submitContribution} className="space-y-4">
-              {/* Input Nominal */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nominal Patungan
@@ -591,17 +577,13 @@ export default function GoalsPage() {
                     type="text"
                     required
                     value={amount}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      setAmount(val ? Number(val).toLocaleString("id-ID") : "");
-                    }}
+                    onChange={(e) => setAmount(formatNumberInput(e.target.value))}
                     placeholder="0"
                     className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-black text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
                   />
                 </div>
               </div>
 
-              {/* Pilihan Sumber Dana */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                   Sumber Dana Patungan
@@ -632,7 +614,6 @@ export default function GoalsPage() {
                 </div>
               </div>
 
-              {/* Jika Potong Kas, Pilih Kasnya */}
               {sourceType === "account" && (
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
@@ -652,7 +633,6 @@ export default function GoalsPage() {
                 </div>
               )}
 
-              {/* Info Bonus Poin */}
               {profile?.role === "member" && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center gap-2 text-xs text-amber-800 font-semibold">
                   <Sparkles className="text-amber-500 shrink-0" size={18} />
@@ -700,11 +680,10 @@ export default function GoalsPage() {
               </button>
             </div>
             <p className="text-xs text-slate-500 mb-4">
-              Cairkan dana terkumpul sebesar <span className="font-black text-emerald-600">Rp {cairkanGoal?.current_amount.toLocaleString("id-ID")}</span> dari target <span className="font-bold text-slate-800">{cairkanGoal?.title}</span>.
+              Cairkan dana terkumpul sebesar <span className="font-black text-emerald-600">{formatRupiah(cairkanGoal?.current_amount)}</span> dari target <span className="font-bold text-slate-800">{cairkanGoal?.title}</span>.
             </p>
 
             <form onSubmit={submitPencairan} className="space-y-4">
-              {/* Pilihan Tujuan Penyetoran */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                   Tujuan Penyetoran Dana
