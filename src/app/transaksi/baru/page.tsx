@@ -3,9 +3,12 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Tag, CheckCircle } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Tag, CheckCircle, Sparkles, Camera } from "lucide-react";
 import Link from "next/link";
 import { Account, Category, TransactionType } from "@/types/database";
+import { formatNumberInput } from "@/lib/format";
+import ReceiptScannerModal from "@/components/transaksi/ReceiptScannerModal";
+import AiSettingsModal from "@/components/profil/AiSettingsModal";
 
 function TransactionFormContent() {
   const router = useRouter();
@@ -25,6 +28,10 @@ function TransactionFormContent() {
   const [currentUserName, setCurrentUserName] = useState("Admin");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
+  // AI Scanner & Settings Modals
+  const [showScannerModal, setShowScannerModal] = useState(false);
+  const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
+
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,67 +67,31 @@ function TransactionFormContent() {
       alert("Masukkan nominal transaksi yang valid (lebih dari 0)!");
       return;
     }
+
     if (!accountId) {
       alert("Pilih kas terlebih dahulu!");
       return;
     }
+
     if (!category) {
-      alert("Pilih kategori terlebih dahulu!");
+      alert("Pilih kategori transaksi!");
       return;
     }
+
     setShowConfirmModal(true);
   };
 
-  const handleSaveTransaction = async () => {
+  const handleConfirmSubmit = async () => {
     setShowConfirmModal(false);
     setLoading(true);
 
     try {
-      const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
-
-      // Budget limit warning check for expenses
-      if (type === "expense" && accountId) {
-        const selectedAccount = accounts.find(a => a.id === accountId);
-        if (selectedAccount && Number(selectedAccount.budget_limit) > 0) {
-          const budgetLimit = Number(selectedAccount.budget_limit);
-          const currentMonth = new Date().getMonth();
-          const currentYear = new Date().getFullYear();
-
-          // Fetch current month expenses
-          const { data: existingTx } = await supabase
-            .from("transactions")
-            .select("amount, created_at, type, is_transfer")
-            .eq("account_id", accountId)
-            .eq("type", "expense");
-
-          let currentExpenseTotal = 0;
-          existingTx?.forEach(tx => {
-            const txDate = new Date(tx.created_at);
-            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear && !tx.is_transfer) {
-              currentExpenseTotal += Number(tx.amount);
-            }
-          });
-
-          const projectedTotal = currentExpenseTotal + numAmount;
-          if (projectedTotal > budgetLimit) {
-            const over = projectedTotal - budgetLimit;
-            const confirmSave = window.confirm(
-              `⚠️ PERINGATAN BUDGET!\n\nPengeluaran ini (Rp ${numAmount.toLocaleString("id-ID")}) akan menyebabkan total pengeluaran bulan ini (Rp ${projectedTotal.toLocaleString("id-ID")}) melebihi target budget Anda (Rp ${budgetLimit.toLocaleString("id-ID")}) sebesar Rp ${over.toLocaleString("id-ID")}.\n\nTetap simpan transaksi ini?`
-            );
-            if (!confirmSave) {
-              setLoading(false);
-              return;
-            }
-          }
-        }
-      }
-
       let receipt_url = null;
 
-      // Upload file jika ada
+      // Upload gambar jika ada
       if (file) {
         const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -163,26 +134,86 @@ function TransactionFormContent() {
     }
   };
 
+  const handleApplyAiScan = (scannedData: {
+    amount: number;
+    description: string;
+    category?: string;
+    file: File;
+  }) => {
+    setType("expense");
+    setAmount(formatNumberInput(scannedData.amount.toString()));
+    setDescription(scannedData.description);
+    setFile(scannedData.file);
+
+    if (scannedData.category) {
+      const match = dbCategories.find(
+        (c) => c.name.toLowerCase() === scannedData.category?.toLowerCase()
+      );
+      if (match) {
+        setCategory(match.name);
+      } else {
+        // Coba cari kategori yang mengandung kata
+        const looseMatch = dbCategories.find((c) =>
+          c.name.toLowerCase().includes(scannedData.category?.toLowerCase() || "")
+        );
+        if (looseMatch) setCategory(looseMatch.name);
+      }
+    }
+  };
+
+  const selectedCategoryObj = dbCategories.find((c) => c.name === category);
+
   return (
-    <main className="p-6 pb-24 bg-slate-50 min-h-screen">
-      <header className="mb-6 pt-4 flex items-center gap-4">
-        <Link 
-          href={prefillAccountId ? `/kas/${prefillAccountId}` : "/"} 
-          className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold text-slate-800 truncate">
-            {prefillAccountId ? `Catat ${type === 'income' ? 'Pemasukan' : 'Pengeluaran'}` : "Catat Transaksi"}
-          </h1>
-          {prefillAccountId && (
-            <p className="text-sm font-semibold text-emerald-600 truncate">
-              {accounts.find(a => a.id === prefillAccountId)?.name || "Memuat..."}
-            </p>
-          )}
+    <main className="p-6 pb-28 min-h-screen bg-slate-50">
+      <header className="mb-6 pt-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link 
+            href={prefillAccountId ? `/kas/${prefillAccountId}` : "/"} 
+            className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-800 truncate">
+              {prefillAccountId ? `Catat ${type === 'income' ? 'Pemasukan' : 'Pengeluaran'}` : "Catat Transaksi"}
+            </h1>
+            {prefillAccountId && (
+              <p className="text-sm font-semibold text-emerald-600 truncate">
+                {accounts.find(a => a.id === prefillAccountId)?.name || "Memuat..."}
+              </p>
+            )}
+          </div>
         </div>
+
+        {/* Tombol AI Scan Struk di Header */}
+        <button
+          type="button"
+          onClick={() => setShowScannerModal(true)}
+          className="py-2 px-3.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-white font-bold rounded-2xl text-xs flex items-center gap-1.5 shadow-md shadow-orange-200 active:scale-95 hover:brightness-105 transition-all shrink-0"
+        >
+          <Sparkles size={14} className="animate-spin" />
+          <span className="hidden sm:inline">Scan Struk AI</span>
+          <span className="sm:hidden">Scan AI</span>
+        </button>
       </header>
+
+      {/* AI Scanner Banner */}
+      <div 
+        onClick={() => setShowScannerModal(true)}
+        className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-4 rounded-3xl text-white shadow-lg shadow-orange-200/60 mb-6 flex items-center justify-between cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all relative overflow-hidden"
+      >
+        <div className="relative z-10">
+          <div className="flex items-center gap-1.5 text-amber-200 text-[10px] font-black uppercase tracking-wider mb-0.5">
+            <Sparkles size={13} />
+            <span>Fitur Cerdas Baru</span>
+          </div>
+          <h3 className="text-sm font-black">Scan Nota Belanja dengan AI</h3>
+          <p className="text-[11px] text-white/90 mt-0.5">Foto struk kasir, AI otomatis mengisi nominal & toko!</p>
+        </div>
+        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/30 shadow-inner">
+          <Camera size={22} />
+        </div>
+      </div>
 
       <form onSubmit={handleReview} className="space-y-6">
         {/* Pilihan Jenis */}
@@ -226,7 +257,6 @@ function TransactionFormContent() {
                   type="button"
                   onClick={() => {
                     setCategory(cat.name);
-                    // Frictionless UX: Auto-advance focus to Amount input
                     amountInputRef.current?.focus();
                   }}
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
@@ -238,35 +268,28 @@ function TransactionFormContent() {
                   }`}
                 >
                   <span className="text-base">{cat.icon}</span>
-                  <span>{cat.name.replace(cat.icon + " ", "")}</span>
+                  <span>{cat.name}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
-          {/* Nominal */}
+        {/* Form Inputs Container */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+          {/* Nominal Input */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nominal</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">Rp</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">Rp</span>
               <input
                 ref={amountInputRef}
                 type="text"
-                inputMode="numeric"
                 required
                 value={amount}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "");
-                  if (!val) {
-                    setAmount("");
-                  } else {
-                    setAmount(parseInt(val, 10).toLocaleString("id-ID"));
-                  }
-                }}
+                onChange={(e) => setAmount(formatNumberInput(e.target.value))}
                 placeholder="0"
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-lg font-bold text-slate-800 transition-all"
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-2xl font-bold text-slate-800 transition-all placeholder:text-slate-300"
               />
             </div>
           </div>
@@ -296,26 +319,31 @@ function TransactionFormContent() {
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Contoh: Beli token listrik, Terima honor..."
+              placeholder="Contoh: Beli token listrik, Belanja supermarket..."
               className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 transition-all font-medium"
             />
           </div>
 
-          {/* Upload Nota (Opsional) */}
+          {/* Upload Nota / Struk Bukti */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Foto Nota (Opsional)</label>
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <Upload className="w-8 h-8 mb-2 text-slate-400" />
-                <p className="text-sm text-slate-500 font-medium">
-                  {file ? file.name : "Ketuk untuk upload foto"}
-                </p>
-              </div>
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Foto Struk / Nota (Opsional)
+            </label>
+            <label className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
+              <Upload className="text-slate-400 mb-2" size={24} />
+              <span className="text-sm font-medium text-slate-600">
+                {file ? file.name : "Ambil foto atau pilih dari galeri"}
+              </span>
+              <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setFile(e.target.files[0]);
+                  }
+                }}
               />
             </label>
           </div>
@@ -359,55 +387,82 @@ function TransactionFormContent() {
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-6">
               <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
                 <span className="text-xs font-semibold text-slate-400 uppercase">Jenis</span>
-                <span className={`text-sm font-bold ${type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                   {type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                 </span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Nominal</span>
-                <span className="text-base font-black text-slate-800">Rp {amount}</span>
-              </div>
-              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
                 <span className="text-xs font-semibold text-slate-400 uppercase">Kategori</span>
-                <span className="text-sm font-bold text-slate-700">{category}</span>
+                <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                  <span>{selectedCategoryObj?.icon || "🏷️"}</span>
+                  <span>{category}</span>
+                </span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
                 <span className="text-xs font-semibold text-slate-400 uppercase">Kas</span>
-                <span className="text-sm font-bold text-slate-700">{accounts.find(a => a.id === accountId)?.name}</span>
+                <span className="text-sm font-bold text-slate-700">
+                  {accounts.find(a => a.id === accountId)?.name}
+                </span>
               </div>
-              <div className="flex justify-between items-start pt-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase mt-0.5">Ket</span>
-                <span className="text-sm font-medium text-slate-700 text-right max-w-[60%]">{description}</span>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Keterangan</span>
+                <span className="text-sm font-medium text-slate-700 max-w-[200px] text-right truncate">
+                  {description}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-xs font-semibold text-slate-400 uppercase">Total Nominal</span>
+                <span className={`text-xl font-black ${type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+                  Rp {amount}
+                </span>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <button 
+              <button
+                type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-3.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm"
               >
-                Batal
+                Ubah Lagi
               </button>
-              <button 
-                onClick={handleSaveTransaction}
-                disabled={loading}
-                className={`flex-1 py-3.5 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' : 'bg-red-500 hover:bg-red-600 shadow-red-200'
-                }`}
+              <button
+                type="button"
+                onClick={handleConfirmSubmit}
+                className="flex-1 py-3.5 px-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 text-sm flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Yakin & Simpan'}
+                Ya, Simpan
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* AI Receipt Scanner Modal */}
+      <ReceiptScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        availableCategories={dbCategories.map((c) => c.name)}
+        onApplyScan={handleApplyAiScan}
+        onOpenAiSettings={() => setShowAiSettingsModal(true)}
+      />
+
+      {/* AI Settings Modal */}
+      <AiSettingsModal
+        isOpen={showAiSettingsModal}
+        onClose={() => setShowAiSettingsModal(false)}
+      />
     </main>
   );
 }
 
-export default function BaruTransaksi() {
+export default function NewTransactionPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Memuat...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex justify-center items-center">
+        <Loader2 className="animate-spin text-emerald-500" size={32} />
+      </div>
+    }>
       <TransactionFormContent />
     </Suspense>
   );

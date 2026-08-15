@@ -12,7 +12,8 @@ import {
   Tags, 
   Wallet, 
   UserPlus,
-  BarChart3
+  BarChart3,
+  Sparkles
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,6 +25,7 @@ import ChangePinModal from "@/components/profil/ChangePinModal";
 import AddUserModal from "@/components/profil/AddUserModal";
 import MemberListModal from "@/components/profil/MemberListModal";
 import ManageKasModal from "@/components/profil/ManageKasModal";
+import AiSettingsModal from "@/components/profil/AiSettingsModal";
 
 export default function ProfilPage() {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function ProfilPage() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showMemberListModal, setShowMemberListModal] = useState(false);
   const [showManageKasModal, setShowManageKasModal] = useState(false);
+  const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
 
   // Derived values from session & profile
   const userEmail = session?.user?.email || "";
@@ -209,6 +212,31 @@ export default function ProfilPage() {
           </div>
         </div>
 
+        {/* Section: Fitur Cerdas & AI (Untuk Semua Anggota) */}
+        <div>
+          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
+            Fitur Cerdas AI
+          </h3>
+          <div className="bg-white rounded-3xl p-2 border border-slate-100 shadow-sm space-y-1">
+            <button
+              type="button"
+              onClick={() => setShowAiSettingsModal(true)}
+              className="w-full p-3.5 flex items-center justify-between rounded-2xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Pengaturan AI Gemini (Scan Struk)</h4>
+                  <p className="text-[11px] text-slate-400">Atur & uji kunci API Google AI Studio</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300" />
+            </button>
+          </div>
+        </div>
+
         {/* Section: Keluar Akun */}
         <div className="pt-2">
           <button
@@ -246,6 +274,11 @@ export default function ProfilPage() {
         phone={phone}
         onClose={() => setShowManageKasModal(false)}
         onKasChanged={fetchKasAccounts}
+      />
+
+      <AiSettingsModal
+        isOpen={showAiSettingsModal}
+        onClose={() => setShowAiSettingsModal(false)}
       />
 
     </main>

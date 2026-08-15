@@ -3,10 +3,13 @@
 import { useState, useEffect, use, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Receipt, Tag, CheckCircle } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Receipt, Tag, CheckCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Account, Category, Transaction, TransactionType } from "@/types/database";
+import { formatNumberInput } from "@/lib/format";
+import ReceiptScannerModal from "@/components/transaksi/ReceiptScannerModal";
+import AiSettingsModal from "@/components/profil/AiSettingsModal";
 
 function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -32,8 +35,36 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const [loading, setLoading] = useState(false);
   const [initialFetchLoading, setInitialFetchLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showScannerModal, setShowScannerModal] = useState(false);
+  const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
   
   const amountInputRef = useRef<HTMLInputElement>(null);
+
+  const handleApplyAiScan = (scannedData: {
+    amount: number;
+    description: string;
+    category?: string;
+    file: File;
+  }) => {
+    setType("expense");
+    setAmount(formatNumberInput(scannedData.amount.toString()));
+    setDescription(scannedData.description);
+    setFile(scannedData.file);
+
+    if (scannedData.category) {
+      const match = dbCategories.find(
+        (c) => c.name.toLowerCase() === scannedData.category?.toLowerCase()
+      );
+      if (match) {
+        setCategory(match.name);
+      } else {
+        const looseMatch = dbCategories.find((c) =>
+          c.name.toLowerCase().includes(scannedData.category?.toLowerCase() || "")
+        );
+        if (looseMatch) setCategory(looseMatch.name);
+      }
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -220,16 +251,26 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
             <h1 className="text-xl font-bold text-slate-800">Detail Transaksi</h1>
           </div>
           
-          <button 
-            type="button" 
-            onClick={handlePrint}
-            className="flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all text-sm font-bold active:scale-95"
-          >
-            <div className="relative w-6 h-6 rounded-md overflow-hidden shadow-inner">
-              <Image src="/icons/icon_print.jpg" alt="Print" fill className="object-cover" />
-            </div>
-            Cetak
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowScannerModal(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-orange-200 hover:brightness-105 active:scale-95 transition-all"
+            >
+              <Sparkles size={14} />
+              <span>Scan AI</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={handlePrint}
+              className="flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all text-sm font-bold active:scale-95"
+            >
+              <div className="relative w-6 h-6 rounded-md overflow-hidden shadow-inner">
+                <Image src="/icons/icon_print.jpg" alt="Print" fill className="object-cover" />
+              </div>
+              Cetak
+            </button>
+          </div>
         </header>
 
         <form onSubmit={handleReview} className="space-y-6">
@@ -453,6 +494,20 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           </div>
         )}
+        {/* AI Receipt Scanner Modal */}
+        <ReceiptScannerModal
+          isOpen={showScannerModal}
+          onClose={() => setShowScannerModal(false)}
+          availableCategories={dbCategories.map((c) => c.name)}
+          onApplyScan={handleApplyAiScan}
+          onOpenAiSettings={() => setShowAiSettingsModal(true)}
+        />
+
+        {/* AI Settings Modal */}
+        <AiSettingsModal
+          isOpen={showAiSettingsModal}
+          onClose={() => setShowAiSettingsModal(false)}
+        />
       </main>
     </>
   );
