@@ -42,36 +42,52 @@ export default function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProp
     setIsTesting(true);
     setTestResult(null);
 
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: "Halo! Jawab dengan 1 kata: 'OK'" }] }],
-        }),
-      });
+    const candidateModels = [
+      "gemini-1.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro",
+      "gemini-pro"
+    ];
 
-      if (res.ok) {
-        setTestResult({
-          success: true,
-          message: "Koneksi ke Google Gemini AI Berhasil! Fitur scan struk siap digunakan.",
+    let success = false;
+    let lastErrorMsg = "";
+
+    for (const model of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "Halo! Jawab dengan 1 kata: OK" }] }],
+          }),
         });
-      } else {
-        const err = await res.json().catch(() => ({}));
-        setTestResult({
-          success: false,
-          message: err?.error?.message || `Gagal menghubungkan ke AI (HTTP ${res.status}). Pastikan API Key valid.`,
-        });
+
+        if (res.ok) {
+          success = true;
+          setTestResult({
+            success: true,
+            message: `Koneksi ke Google Gemini AI (${model}) Berhasil! Fitur scan struk siap digunakan.`,
+          });
+          break;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          lastErrorMsg = err?.error?.message || `HTTP ${res.status}`;
+        }
+      } catch (err: unknown) {
+        lastErrorMsg = err instanceof Error ? err.message : "Kesalahan jaringan";
       }
-    } catch {
+    }
+
+    if (!success) {
       setTestResult({
         success: false,
-        message: "Terjadi kesalahan jaringan saat menguji koneksi AI.",
+        message: `Gagal menghubungkan ke AI: ${lastErrorMsg}. Pastikan API Key valid dari Google AI Studio.`,
       });
-    } finally {
-      setIsTesting(false);
     }
+
+    setIsTesting(false);
   };
 
   return (
@@ -144,7 +160,7 @@ export default function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProp
               ) : (
                 <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-500" />
               )}
-              <p className="font-medium text-[11px] leading-tight">{testResult.message}</p>
+              <p className="font-medium text-[11px] leading-tight flex-1">{testResult.message}</p>
             </div>
           )}
 

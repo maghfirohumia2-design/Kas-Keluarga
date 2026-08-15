@@ -65,8 +65,14 @@ export async function scanReceiptAction({
       },
     };
 
-    // Coba gunakan model gemini-2.5-flash (tercepat & tercerdas), dengan fallback ke gemini-1.5-flash
-    const models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+    // Daftar model aktif Google AI Studio
+    const models = [
+      "gemini-1.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro",
+      "gemini-pro"
+    ];
     let rawResponseText = "";
     let lastError = "";
 
