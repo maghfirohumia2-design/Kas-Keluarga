@@ -53,33 +53,47 @@ export async function createUserAction(accessToken: string, phone: string, pin: 
     if (!authCheck.authorized) return { error: authCheck.error };
 
     // Validasi input
-    if (!phone || phone.length < 10) return { error: "Nomor HP tidak valid." };
-    if (!pin || pin.length !== 6) return { error: "PIN harus 6 digit angka." };
-    if (!fullName) return { error: "Nama pengguna harus diisi." };
+    const cleanPhone = phone.replace(/\D/g, "").trim();
+    const cleanFullName = fullName.trim();
+    const cleanPin = pin.trim();
 
-    const email = `hp_${phone}@kaskeluarga.com`;
+    if (!cleanPhone || cleanPhone.length < 10) return { error: "Nomor HP minimal 10 digit angka." };
+    if (!cleanPin || cleanPin.length !== 6) return { error: "PIN harus 6 digit angka." };
+    if (!cleanFullName) return { error: "Nama pengguna harus diisi." };
+
+    const email = `hp_${cleanPhone}@kaskeluarga.com`;
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email: email,
-      password: pin,
+      password: cleanPin,
       email_confirm: true, // Auto confirm
       user_metadata: {
-        full_name: fullName,
-        role: "user"
+        full_name: cleanFullName,
+        role: "member"
       }
     });
 
     if (error) {
       console.error("Create user error:", error);
-      if (error.message.includes("already registered")) {
-        return { error: "Nomor HP ini sudah terdaftar." };
+      if (error.message.includes("already registered") || error.message.includes("already exists")) {
+        return { error: `Nomor HP ${cleanPhone} sudah terdaftar di sistem.` };
       }
       return { error: error.message };
     }
 
+    if (data?.user?.id) {
+      // Pastikan baris profil juga langsung dibuat
+      await supabaseAdmin.from("profiles").upsert({
+        id: data.user.id,
+        full_name: cleanFullName,
+        role: "member",
+        points: 0
+      });
+    }
+
     return { success: true, userId: data.user.id };
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan sistem.";
+    const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan sistem saat mendaftarkan akun.";
     console.error("Create user exception:", err);
     return { error: errorMessage };
   }

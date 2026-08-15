@@ -43,8 +43,9 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
           onClose();
         }, 1500);
       }
-    } catch {
-      setAddUserMessage({ text: "Terjadi kesalahan sistem, silakan coba lagi.", type: "error" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan sistem, silakan coba lagi.";
+      setAddUserMessage({ text: msg, type: "error" });
     } finally {
       setAddUserLoading(false);
     }
