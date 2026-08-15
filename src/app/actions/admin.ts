@@ -31,14 +31,16 @@ async function verifySuperAdmin(accessToken?: string) {
     return { authorized: false, error: "Sesi Anda tidak valid atau telah kedaluwarsa. Silakan login kembali." };
   }
 
-  // Verifikasi role di tabel profiles
-  const { data: profile, error: profileError } = await supabaseAdmin
+  // Verifikasi role di tabel profiles atau user_metadata
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  if (profileError || profile?.role !== "super_admin") {
+  const isSuperAdmin = profile?.role === "super_admin" || user.user_metadata?.role === "super_admin";
+
+  if (!isSuperAdmin) {
     return { authorized: false, error: "Akses ditolak. Hanya Super Admin yang berhak melakukan tindakan ini." };
   }
 
