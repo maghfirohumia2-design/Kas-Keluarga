@@ -267,13 +267,19 @@ export default function ProfilPage() {
     }
   };
 
+  const getAccessToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || "";
+  };
+
   // --- Admin: Create User Logic ---
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddUserLoading(true);
     setAddUserMessage(null);
     try {
-      const res = await createUserAction(newPhone, newPin, newFullName);
+      const token = await getAccessToken();
+      const res = await createUserAction(token, newPhone, newPin, newFullName);
       if (res.error) {
         setAddUserMessage({ text: res.error, type: "error" });
       } else {
@@ -296,7 +302,8 @@ export default function ProfilPage() {
   const handleOpenMembers = async () => {
     setShowMembersModal(true);
     setLoadingMembers(true);
-    const res = await getUsersAction();
+    const token = await getAccessToken();
+    const res = await getUsersAction(token);
     if (res.success) {
       setMembers(res.users);
     } else {
@@ -308,10 +315,11 @@ export default function ProfilPage() {
   const handleDeleteMember = async (userId: string, memberName: string) => {
     if (confirm(`Yakin ingin menghapus anggota "${memberName}" dari sistem?\n(Transaksi yang pernah dibuat akan tetap aman)`)) {
       setLoadingMembers(true);
-      const res = await deleteUserAction(userId);
+      const token = await getAccessToken();
+      const res = await deleteUserAction(token, userId);
       if (res.error) alert(res.error);
       else {
-        const refresh = await getUsersAction();
+        const refresh = await getUsersAction(token);
         if (refresh.success) setMembers(refresh.users);
       }
       setLoadingMembers(false);
@@ -320,16 +328,17 @@ export default function ProfilPage() {
 
   const handleSaveEditMember = async (userId: string) => {
     setLoadingMembers(true);
-    const res = await updateUserAction(userId, editMemberPhone, editMemberName, editMemberPin);
+    const token = await getAccessToken();
+    const res = await updateUserAction(token, userId, editMemberPhone, editMemberName, editMemberPin);
     if (res.error) {
       alert(res.error);
     } else {
       // Perbarui juga rolenya
       if (editMemberRole) {
-        await updateUserRoleAction(userId, editMemberRole);
+        await updateUserRoleAction(token, userId, editMemberRole);
       }
       setEditMemberId(null);
-      const refresh = await getUsersAction();
+      const refresh = await getUsersAction(token);
       if (refresh.success) setMembers(refresh.users);
     }
     setLoadingMembers(false);

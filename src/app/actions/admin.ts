@@ -14,19 +14,47 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-export async function createUserAction(phone: string, pin: string, fullName: string) {
+/**
+ * Memverifikasi apakah request berasal dari pengguna dengan role super_admin
+ */
+async function verifySuperAdmin(accessToken?: string) {
+  if (!supabaseServiceKey) {
+    return { authorized: false, error: "SUPABASE_SERVICE_ROLE_KEY tidak ditemukan di environment." };
+  }
+  if (!accessToken) {
+    return { authorized: false, error: "Akses ditolak. Sesi autentikasi tidak ditemukan." };
+  }
+
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(accessToken);
+  if (userError || !user) {
+    return { authorized: false, error: "Sesi Anda tidak valid atau telah kedaluwarsa. Silakan login kembali." };
+  }
+
+  // Verifikasi role di tabel profiles
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || profile?.role !== "super_admin") {
+    return { authorized: false, error: "Akses ditolak. Hanya Super Admin yang berhak melakukan tindakan ini." };
+  }
+
+  return { authorized: true, user };
+}
+
+export async function createUserAction(accessToken: string, phone: string, pin: string, fullName: string) {
   try {
-    // Validasi sederhana
+    const authCheck = await verifySuperAdmin(accessToken);
+    if (!authCheck.authorized) return { error: authCheck.error };
+
+    // Validasi input
     if (!phone || phone.length < 10) return { error: "Nomor HP tidak valid." };
     if (!pin || pin.length !== 6) return { error: "PIN harus 6 digit angka." };
     if (!fullName) return { error: "Nama pengguna harus diisi." };
 
     const email = `hp_${phone}@kaskeluarga.com`;
-
-    // Cek apakah service key ada
-    if (!supabaseServiceKey) {
-      return { error: "SUPABASE_SERVICE_ROLE_KEY tidak ditemukan di environment." };
-    }
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email: email,
@@ -53,10 +81,11 @@ export async function createUserAction(phone: string, pin: string, fullName: str
   }
 }
 
-export async function getUsersAction() {
+export async function getUsersAction(accessToken: string) {
   try {
-    if (!supabaseServiceKey) return { error: "SUPABASE_SERVICE_ROLE_KEY tidak ditemukan." };
-    
+    const authCheck = await verifySuperAdmin(accessToken);
+    if (!authCheck.authorized) return { error: authCheck.error };
+
     // Auth admin returns users sorted by default
     const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     
@@ -86,10 +115,13 @@ export async function getUsersAction() {
   }
 }
 
-export async function deleteUserAction(userId: string) {
+export async function deleteUserAction(accessToken: string, userId: string) {
   try {
-    if (!supabaseServiceKey) return { error: "Service Role Key tidak ditemukan." };
+    const authCheck = await verifySuperAdmin(accessToken);
+    if (!authCheck.authorized) return { error: authCheck.error };
     
+    if (!userId) return { error: "ID pengguna tidak valid." };
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) return { error: error.message };
     
@@ -100,9 +132,12 @@ export async function deleteUserAction(userId: string) {
   }
 }
 
-export async function updateUserAction(userId: string, phone: string, fullName: string, pin?: string) {
+export async function updateUserAction(accessToken: string, userId: string, phone: string, fullName: string, pin?: string) {
   try {
-    if (!supabaseServiceKey) return { error: "Service Role Key tidak ditemukan." };
+    const authCheck = await verifySuperAdmin(accessToken);
+    if (!authCheck.authorized) return { error: authCheck.error };
+
+    if (!userId) return { error: "ID pengguna tidak valid." };
     if (!phone || phone.length < 10) return { error: "Nomor HP tidak valid." };
     if (!fullName) return { error: "Nama pengguna harus diisi." };
     
@@ -131,9 +166,12 @@ export async function updateUserAction(userId: string, phone: string, fullName: 
   }
 }
 
-export async function updateUserRoleAction(userId: string, newRole: string) {
+export async function updateUserRoleAction(accessToken: string, userId: string, newRole: string) {
   try {
-    if (!supabaseServiceKey) return { error: "Service Role Key tidak ditemukan." };
+    const authCheck = await verifySuperAdmin(accessToken);
+    if (!authCheck.authorized) return { error: authCheck.error };
+
+    if (!userId) return { error: "ID pengguna tidak valid." };
     
     const { error } = await supabaseAdmin.from('profiles').update({ role: newRole }).eq('id', userId);
     if (error) return { error: error.message };
@@ -144,3 +182,4 @@ export async function updateUserRoleAction(userId: string, newRole: string) {
     return { error: err.message || "Gagal memperbarui role." };
   }
 }
+

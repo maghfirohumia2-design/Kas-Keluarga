@@ -486,28 +486,55 @@ export default function KasDashboardPage() {
                   onClick={async () => {
                     if (confirm("Yakin ingin menghapus transaksi ini?")) {
                       setIsDeleting(true);
-                      let error = null;
-                      if (selectedTx.is_transfer && selectedTx.linked_tx_id) {
-                        const res = await fetch('/api/kas/transfer?id=' + selectedTx.id + '&linked_id=' + selectedTx.linked_tx_id, { method: 'DELETE' });
-                        const json = await res.json();
-                        error = json.error;
-                        if (!error) {
-                          setTransactions(transactions.filter(t => t.id !== selectedTx.id && t.id !== selectedTx.linked_tx_id));
+                      let error: any = null;
+                      try {
+                        if (selectedTx.is_transfer || selectedTx.linked_tx_id) {
+                          const filterQuery = selectedTx.linked_tx_id 
+                            ? `id.eq.${selectedTx.id},id.eq.${selectedTx.linked_tx_id},linked_tx_id.eq.${selectedTx.id}`
+                            : `id.eq.${selectedTx.id},linked_tx_id.eq.${selectedTx.id}`;
+                          
+                          const res = await supabase
+                            .from("transactions")
+                            .delete()
+                            .or(filterQuery);
+                          error = res.error;
+                          if (!error) {
+                            setTransactions(prev => prev.filter(t => 
+                              t.id !== selectedTx.id && 
+                              t.id !== selectedTx.linked_tx_id && 
+                              t.linked_tx_id !== selectedTx.id
+                            ));
+                          }
+                        } else {
+                          const res = await supabase.from('transactions').delete().eq('id', selectedTx.id);
+                          error = res.error;
+                          if (!error) {
+                            setTransactions(prev => prev.filter(t => t.id !== selectedTx.id));
+                          }
                         }
-                      } else {
-                        const res = await supabase.from('transactions').delete().eq('id', selectedTx.id);
-                        error = res.error;
+
                         if (!error) {
-                          setTransactions(transactions.filter(t => t.id !== selectedTx.id));
+                          const amount = Number(selectedTx.amount);
+                          if (selectedTx.type === 'income') {
+                            setBalance(prev => prev - amount);
+                          } else {
+                            setBalance(prev => prev + amount);
+                            const currentMonth = new Date().getMonth();
+                            const currentYear = new Date().getFullYear();
+                            const txDate = new Date(selectedTx.created_at);
+                            if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear && !selectedTx.is_transfer) {
+                              setMonthlyExpense(prev => Math.max(0, prev - amount));
+                            }
+                          }
+                        } else {
+                          alert("Gagal menghapus transaksi: " + (error.message || "Terjadi kesalahan."));
                         }
+                      } catch (err: any) {
+                        alert("Gagal menghapus transaksi: " + (err.message || "Terjadi kesalahan."));
+                      } finally {
+                        setIsDeleting(false);
+                        setSelectedTx(null);
                       }
-                      if (!error) {
-                        const amount = Number(selectedTx.amount);
-                        if (selectedTx.type === 'income') setBalance(prev => prev - amount);
-                        else setBalance(prev => prev + amount);
-                      }
-                      setIsDeleting(false);
-                      setSelectedTx(null);
                     }
                   }}
                   disabled={isDeleting}
