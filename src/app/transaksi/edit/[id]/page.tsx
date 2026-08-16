@@ -3,11 +3,11 @@
 import { useState, useEffect, use, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Receipt, Tag, CheckCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Receipt, Tag, CheckCircle, Sparkles, AlertTriangle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Account, Category, Transaction, TransactionType } from "@/types/database";
-import { formatNumberInput } from "@/lib/format";
+import { formatNumberInput, formatRupiah } from "@/lib/format";
 import ReceiptScannerModal from "@/components/transaksi/ReceiptScannerModal";
 import AiSettingsModal from "@/components/profil/AiSettingsModal";
 
@@ -20,6 +20,7 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const [type, setType] = useState<TransactionType>("expense");
   const [category, setCategory] = useState<string>("");
   const [dbCategories, setDbCategories] = useState<Category[]>([]);
+  const [categorySpentMap, setCategorySpentMap] = useState<Record<string, number>>({});
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
@@ -78,6 +79,25 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
       const { data: catData } = await supabase.from("categories").select("*").order("name");
       if (catData) {
         setDbCategories(catData as Category[]);
+      }
+
+      // Fetch monthly expenses
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { data: expData } = await supabase
+        .from("transactions")
+        .select("category, amount, type")
+        .gte("created_at", startOfMonth)
+        .eq("type", "expense");
+
+      if (expData) {
+        const spentMap: Record<string, number> = {};
+        expData.forEach((tx) => {
+          if (tx.category) {
+            spentMap[tx.category] = (spentMap[tx.category] || 0) + Number(tx.amount || 0);
+          }
+        });
+        setCategorySpentMap(spentMap);
       }
 
       // Fetch transaction
@@ -209,6 +229,14 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
   const accountName = accounts.find(a => a.id === accountId)?.name || "Kas Tidak Diketahui";
   const formattedDate = createdAt ? new Date(createdAt).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" }) : "-";
 
+  const selectedCategoryObj = dbCategories.find((c) => c.name === category);
+  const currentCategoryLimit = Number(selectedCategoryObj?.budget_limit) || 0;
+  const currentCategorySpent = category ? (categorySpentMap[category] || 0) : 0;
+  const parsedInputAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+  const projectedCategorySpent = type === "expense" ? currentCategorySpent + parsedInputAmount : 0;
+  const isCategoryOverbudget = type === "expense" && currentCategoryLimit > 0 && projectedCategorySpent > currentCategoryLimit;
+  const isCategoryNearBudget = type === "expense" && currentCategoryLimit > 0 && !isCategoryOverbudget && (projectedCategorySpent / currentCategoryLimit) >= 0.75;
+
   return (
     <>
       {/* --- Tampilan Struk Khusus untuk Print --- */}
@@ -330,6 +358,44 @@ function EditTransaksiContent({ params }: { params: Promise<{ id: string }> }) {
                 );
               })}
             </div>
+
+            {/* Live Category Budget Alert Banner */}
+            {type === "expense" && currentCategoryLimit > 0 && (
+              <div className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2.5 transition-all ${
+                isCategoryOverbudget
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : isCategoryNearBudget
+                  ? "bg-amber-50 border-amber-200 text-amber-800"
+                  : "bg-emerald-50 border-emerald-200 text-emerald-800"
+              }`}>
+                {isCategoryOverbudget ? (
+                  <AlertTriangle size={16} className="shrink-0 text-red-600 mt-0.5" />
+                ) : isCategoryNearBudget ? (
+                  <AlertTriangle size={16} className="shrink-0 text-amber-600 mt-0.5" />
+                ) : (
+                  <ShieldCheck size={16} className="shrink-0 text-emerald-600 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <div className="flex justify-between items-center font-bold mb-0.5">
+                    <span>
+                      {isCategoryOverbudget
+                        ? "⚠️ Peringatan: Melebihi Batas Anggaran!"
+                        : isCategoryNearBudget
+                        ? "⚡ Mendekati Batas Anggaran Bulanan"
+                        : "🛡️ Anggaran Kategori Masih Aman"}
+                    </span>
+                    <span>
+                      {formatRupiah(projectedCategorySpent)} / {formatRupiah(currentCategoryLimit)}
+                    </span>
+                  </div>
+                  <p className="text-[11px] opacity-90">
+                    {isCategoryOverbudget
+                      ? `Transaksi ini membuat total pengeluaran kategori ${category} overbudget sebesar ${formatRupiah(projectedCategorySpent - currentCategoryLimit)}.`
+                      : `Sisa kuota anggaran kategori ini: ${formatRupiah(Math.max(currentCategoryLimit - projectedCategorySpent, 0))}.`}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">

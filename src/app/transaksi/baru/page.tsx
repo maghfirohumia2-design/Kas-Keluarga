@@ -3,29 +3,31 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Tag, CheckCircle, Sparkles, Camera } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Tag, CheckCircle, Sparkles, Camera, AlertTriangle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { Account, Category, TransactionType } from "@/types/database";
-import { formatNumberInput } from "@/lib/format";
+import { formatNumberInput, formatRupiah } from "@/lib/format";
 import ReceiptScannerModal from "@/components/transaksi/ReceiptScannerModal";
 import AiSettingsModal from "@/components/profil/AiSettingsModal";
 
-function TransactionFormContent() {
+function TransaksiBaruContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  const prefillType = searchParams.get("type") as TransactionType | null;
   const prefillAccountId = searchParams.get("accountId");
-  const prefillType = searchParams.get("type");
 
-  const [type, setType] = useState<TransactionType>((prefillType as TransactionType) || "expense");
-  const [category, setCategory] = useState<string>("");
-  const [dbCategories, setDbCategories] = useState<Category[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [accountId, setAccountId] = useState(prefillAccountId || "");
+  const [type, setType] = useState<TransactionType>(prefillType || "expense");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [accountId, setAccountId] = useState(prefillAccountId || "");
   const [file, setFile] = useState<File | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+  const [categorySpentMap, setCategorySpentMap] = useState<Record<string, number>>({});
+  const [currentUserName, setCurrentUserName] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [currentUserName, setCurrentUserName] = useState("Admin");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // AI Scanner & Settings Modals
@@ -36,25 +38,42 @@ function TransactionFormContent() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data: accData } = await supabase.from("accounts").select("*").order("name");
-      if (accData) {
-        const accs = accData as Account[];
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const [accRes, catRes, txRes, userRes] = await Promise.all([
+        supabase.from("accounts").select("*").order("name"),
+        supabase.from("categories").select("*").order("name"),
+        supabase.from("transactions").select("category, amount, type").gte("created_at", startOfMonth).eq("type", "expense"),
+        supabase.auth.getUser(),
+      ]);
+
+      if (accRes.data) {
+        const accs = accRes.data as Account[];
         setAccounts(accs);
         if (!prefillAccountId && accs.length > 0) setAccountId(accs[0].id);
       }
 
-      const { data: catData } = await supabase.from("categories").select("*").order("name");
-      if (catData) {
-        const cats = catData as Category[];
+      if (catRes.data) {
+        const cats = catRes.data as Category[];
         setDbCategories(cats);
         // Set initial category based on type
         const filtered = cats.filter(c => c.type === (prefillType || "expense"));
         if (filtered.length > 0) setCategory(filtered[0].name);
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.user_metadata?.full_name) {
-        setCurrentUserName(user.user_metadata.full_name);
+      if (txRes.data) {
+        const spentMap: Record<string, number> = {};
+        txRes.data.forEach((tx) => {
+          if (tx.category) {
+            spentMap[tx.category] = (spentMap[tx.category] || 0) + Number(tx.amount || 0);
+          }
+        });
+        setCategorySpentMap(spentMap);
+      }
+
+      if (userRes.data?.user?.user_metadata?.full_name) {
+        setCurrentUserName(userRes.data.user.user_metadata.full_name);
       }
     }
     fetchData();
@@ -162,6 +181,12 @@ function TransactionFormContent() {
   };
 
   const selectedCategoryObj = dbCategories.find((c) => c.name === category);
+  const currentCategoryLimit = Number(selectedCategoryObj?.budget_limit) || 0;
+  const currentCategorySpent = category ? (categorySpentMap[category] || 0) : 0;
+  const parsedInputAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+  const projectedCategorySpent = type === "expense" ? currentCategorySpent + parsedInputAmount : 0;
+  const isCategoryOverbudget = type === "expense" && currentCategoryLimit > 0 && projectedCategorySpent > currentCategoryLimit;
+  const isCategoryNearBudget = type === "expense" && currentCategoryLimit > 0 && !isCategoryOverbudget && (projectedCategorySpent / currentCategoryLimit) >= 0.75;
 
   return (
     <main className="p-6 pb-28 min-h-screen bg-slate-50">
@@ -273,6 +298,44 @@ function TransactionFormContent() {
               );
             })}
           </div>
+
+          {/* Live Category Budget Alert Banner */}
+          {type === "expense" && currentCategoryLimit > 0 && (
+            <div className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2.5 transition-all ${
+              isCategoryOverbudget
+                ? "bg-red-50 border-red-200 text-red-700"
+                : isCategoryNearBudget
+                ? "bg-amber-50 border-amber-200 text-amber-800"
+                : "bg-emerald-50 border-emerald-200 text-emerald-800"
+            }`}>
+              {isCategoryOverbudget ? (
+                <AlertTriangle size={16} className="shrink-0 text-red-600 mt-0.5" />
+              ) : isCategoryNearBudget ? (
+                <AlertTriangle size={16} className="shrink-0 text-amber-600 mt-0.5" />
+              ) : (
+                <ShieldCheck size={16} className="shrink-0 text-emerald-600 mt-0.5" />
+              )}
+              <div className="flex-1">
+                <div className="flex justify-between items-center font-bold mb-0.5">
+                  <span>
+                    {isCategoryOverbudget
+                      ? "⚠️ Peringatan: Melebihi Batas Anggaran!"
+                      : isCategoryNearBudget
+                      ? "⚡ Mendekati Batas Anggaran Bulanan"
+                      : "🛡️ Anggaran Kategori Masih Aman"}
+                  </span>
+                  <span>
+                    {formatRupiah(projectedCategorySpent)} / {formatRupiah(currentCategoryLimit)}
+                  </span>
+                </div>
+                <p className="text-[11px] opacity-90">
+                  {isCategoryOverbudget
+                    ? `Transaksi ini membuat total pengeluaran kategori ${category} overbudget sebesar ${formatRupiah(projectedCategorySpent - currentCategoryLimit)}.`
+                    : `Sisa kuota anggaran kategori ini: ${formatRupiah(Math.max(currentCategoryLimit - projectedCategorySpent, 0))}.`}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form Inputs Container */}
@@ -463,7 +526,7 @@ export default function NewTransactionPage() {
         <Loader2 className="animate-spin text-emerald-500" size={32} />
       </div>
     }>
-      <TransactionFormContent />
+      <TransaksiBaruContent />
     </Suspense>
   );
 }

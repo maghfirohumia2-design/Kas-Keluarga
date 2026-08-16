@@ -35,6 +35,7 @@ export interface Category {
   type: TransactionType;
   bg_class: string;
   text_class: string;
+  budget_limit?: number | null; // Batas anggaran bulanan (khusus expense)
   created_at?: string;
 }
 
