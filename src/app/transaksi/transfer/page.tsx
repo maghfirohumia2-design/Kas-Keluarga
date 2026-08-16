@@ -3,16 +3,21 @@
 import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowLeftRight, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, Loader2, CheckCircle, AlertTriangle, Wallet } from "lucide-react";
 import Link from "next/link";
 import { Account } from "@/types/database";
+import { formatNumberInput, parseNumberInput, formatRupiah } from "@/lib/format";
+
+interface AccountWithBalance extends Account {
+  calculatedBalance: number;
+}
 
 function TransferFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefillFromId = searchParams.get("fromId");
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
   const [fromAccountId, setFromAccountId] = useState(prefillFromId || "");
   const [toAccountId, setToAccountId] = useState("");
   const [amount, setAmount] = useState("");
@@ -23,20 +28,37 @@ function TransferFormContent() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data } = await supabase.from("accounts").select("*").order("name");
-      if (data && data.length > 0) {
-        const accs = data as Account[];
-        setAccounts(accs);
-        const initialFrom = prefillFromId || accs[0].id;
+      const [accRes, txRes, userRes] = await Promise.all([
+        supabase.from("accounts").select("*").order("name"),
+        supabase.from("transactions").select("account_id, type, amount"),
+        supabase.auth.getUser(),
+      ]);
+
+      if (accRes.data && accRes.data.length > 0) {
+        const rawAccs = accRes.data as Account[];
+        const txs = txRes.data || [];
+
+        const accsWithBal: AccountWithBalance[] = rawAccs.map((acc) => {
+          const accTxs = txs.filter((t) => t.account_id === acc.id);
+          const income = accTxs
+            .filter((t) => t.type === "income")
+            .reduce((s, t) => s + Number(t.amount || 0), 0);
+          const expense = accTxs
+            .filter((t) => t.type === "expense")
+            .reduce((s, t) => s + Number(t.amount || 0), 0);
+          const curBal = Number(acc.initial_balance || 0) + (income - expense);
+          return { ...acc, calculatedBalance: curBal };
+        });
+
+        setAccounts(accsWithBal);
+        const initialFrom = prefillFromId || accsWithBal[0].id;
         setFromAccountId(initialFrom);
-        // Find default "to" account different from "from"
-        const defaultTo = accs.find(a => a.id !== initialFrom)?.id || "";
+        const defaultTo = accsWithBal.find((a) => a.id !== initialFrom)?.id || "";
         setToAccountId(defaultTo);
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.user_metadata?.full_name) {
-        setCurrentUserName(user.user_metadata.full_name);
+      if (userRes.data?.user?.user_metadata?.full_name) {
+        setCurrentUserName(userRes.data.user.user_metadata.full_name);
       }
     }
     fetchData();
@@ -45,9 +67,17 @@ function TransferFormContent() {
   const handleFromChange = (newFromId: string) => {
     setFromAccountId(newFromId);
     if (newFromId === toAccountId) {
-      const other = accounts.find(a => a.id !== newFromId);
+      const other = accounts.find((a) => a.id !== newFromId);
       if (other) setToAccountId(other.id);
     }
+  };
+
+  const handleSwap = () => {
+    if (!fromAccountId || !toAccountId) return;
+    const oldFrom = fromAccountId;
+    const oldTo = toAccountId;
+    setFromAccountId(oldTo);
+    setToAccountId(oldFrom);
   };
 
   const handleReview = (e: React.FormEvent) => {
@@ -57,7 +87,7 @@ function TransferFormContent() {
       return;
     }
 
-    const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+    const numAmount = parseNumberInput(amount);
     if (numAmount <= 0) {
       alert("Masukkan nominal transfer yang valid!");
       return;
@@ -72,7 +102,7 @@ function TransferFormContent() {
       return;
     }
 
-    const numAmount = parseFloat(amount.replace(/\D/g, "")) || 0;
+    const numAmount = parseNumberInput(amount);
     if (numAmount <= 0) {
       alert("Masukkan nominal transfer yang valid!");
       return;
@@ -127,7 +157,7 @@ function TransferFormContent() {
           .eq("id", txOut.id);
       }
 
-      alert(`✅ Transfer sebesar Rp ${numAmount.toLocaleString("id-ID")} berhasil!`);
+      alert(`✅ Transfer sebesar ${formatRupiah(numAmount)} berhasil!`);
 
       if (prefillFromId) {
         router.push(`/kas/${prefillFromId}`);
@@ -143,6 +173,27 @@ function TransferFormContent() {
     }
   };
 
+  const fromAcc = accounts.find((a) => a.id === fromAccountId);
+  const toAcc = accounts.find((a) => a.id === toAccountId);
+  const numAmount = parseNumberInput(amount);
+
+  const fromBalBefore = fromAcc?.calculatedBalance || 0;
+  const fromBalAfter = fromBalBefore - numAmount;
+  const toBalBefore = toAcc?.calculatedBalance || 0;
+  const toBalAfter = toBalBefore + numAmount;
+  const isOverBalance = numAmount > fromBalBefore && fromBalBefore > 0;
+
+  const setPreset = (add: number) => {
+    const cur = parseNumberInput(amount);
+    setAmount(formatNumberInput((cur + add).toString()));
+  };
+
+  const setAllBalance = () => {
+    if (fromBalBefore > 0) {
+      setAmount(formatNumberInput(fromBalBefore.toString()));
+    }
+  };
+
   return (
     <main className="p-6 pb-24 bg-slate-50 min-h-screen">
       <header className="mb-6 pt-4 flex items-center gap-4">
@@ -152,10 +203,13 @@ function TransferFormContent() {
         >
           <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <ArrowLeftRight className="text-blue-500" />
-          Transfer Kas
-        </h1>
+        <div>
+          <h1 className="text-xl font-black text-slate-800 flex items-center gap-2">
+            <ArrowLeftRight className="text-indigo-600" size={22} />
+            Transfer Antar Kas
+          </h1>
+          <p className="text-[11px] text-slate-400 font-medium">Pindahkan saldo antar dompet & rekening keluarga</p>
+        </div>
       </header>
 
       {accounts.length < 2 ? (
@@ -163,169 +217,251 @@ function TransferFormContent() {
           <ArrowLeftRight size={48} className="mx-auto text-slate-300 mb-4" />
           <h2 className="text-lg font-bold text-slate-800 mb-2">Kas Tidak Cukup</h2>
           <p className="text-sm text-slate-500 mb-6">Anda membutuhkan minimal 2 kas untuk melakukan transfer.</p>
-          <Link href="/profil" className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold inline-block hover:bg-emerald-600 transition-colors">
+          <Link
+            href="/profil"
+            className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold inline-block hover:bg-emerald-600 transition-colors"
+          >
             Tambah Kas Baru
           </Link>
         </div>
       ) : (
-        <>
-        <form onSubmit={handleReview} className="space-y-6">
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
-          {/* Kas Asal & Tujuan Card */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Dari Kas (Asal)
-              </label>
-              <select
-                required
-                value={fromAccountId}
-                onChange={(e) => handleFromChange(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-bold text-sm appearance-none"
-              >
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Ke Kas (Tujuan)
-              </label>
-              <select
-                required
-                value={toAccountId}
-                onChange={(e) => setToAccountId(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-bold text-sm appearance-none"
-              >
-                {accounts
-                  .filter((acc) => acc.id !== fromAccountId)
-                  .map((acc) => (
+        <form onSubmit={handleReview} className="space-y-5">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
+            {/* Interactive Kas Asal & Tujuan Card with Swap Button */}
+            <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 relative space-y-4">
+              {/* Dari Kas (Asal) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Dari Kas (Sumber Dana)</span>
+                  {fromAcc && (
+                    <span className="text-[11px] font-bold text-slate-600 lowercase">
+                      saldo: {formatRupiah(fromBalBefore)}
+                    </span>
+                  )}
+                </label>
+                <select
+                  required
+                  value={fromAccountId}
+                  onChange={(e) => handleFromChange(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 font-bold text-sm"
+                >
+                  {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
-                      {acc.name}
+                      {acc.name} ({formatRupiah(acc.calculatedBalance)})
                     </option>
                   ))}
-              </select>
-            </div>
-          </div>
+                </select>
+              </div>
 
-          {/* Nominal */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              Nominal Transfer
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                Rp
-              </span>
+              {/* Swap Button Divider */}
+              <div className="relative flex justify-center py-0.5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200/80" />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSwap}
+                  className="relative z-10 p-2 bg-indigo-600 hover:bg-indigo-700 active:scale-90 text-white rounded-full shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1 text-[11px] font-bold px-3"
+                  title="Tukar Kas Asal dan Tujuan"
+                >
+                  <ArrowLeftRight size={14} />
+                  <span>Tukar Arah</span>
+                </button>
+              </div>
+
+              {/* Ke Kas (Tujuan) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Ke Kas (Tujuan Transfer)</span>
+                  {toAcc && (
+                    <span className="text-[11px] font-bold text-slate-600 lowercase">
+                      saldo: {formatRupiah(toBalBefore)}
+                    </span>
+                  )}
+                </label>
+                <select
+                  required
+                  value={toAccountId}
+                  onChange={(e) => setToAccountId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 font-bold text-sm"
+                >
+                  {accounts
+                    .filter((acc) => acc.id !== fromAccountId)
+                    .map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} ({formatRupiah(acc.calculatedBalance)})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Quick Nominal Presets */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Nominal Cepat
+              </label>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPreset(50000)}
+                  className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  +50 Rb
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreset(100000)}
+                  className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  +100 Rb
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreset(500000)}
+                  className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  +500 Rb
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreset(1000000)}
+                  className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  +1 Jt
+                </button>
+                <button
+                  type="button"
+                  onClick={setAllBalance}
+                  className="col-span-2 sm:col-span-1 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Semua Saldo
+                </button>
+              </div>
+            </div>
+
+            {/* Nominal Input */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Nominal Transfer
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">
+                  Rp
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  required
+                  value={amount}
+                  onChange={(e) => setAmount(formatNumberInput(e.target.value))}
+                  placeholder="0"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-xl font-black text-slate-800 transition-all placeholder:text-slate-300"
+                />
+              </div>
+            </div>
+
+            {/* Live Balance Simulation Card */}
+            {numAmount > 0 && fromAcc && toAcc && (
+              <div className="p-4 bg-gradient-to-br from-indigo-50/70 to-blue-50/50 rounded-2xl border border-indigo-100 space-y-2 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-indigo-900 text-[11px] uppercase tracking-wider">
+                  <Wallet size={14} /> Simulasi Saldo Setelah Transfer
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="p-2.5 bg-white/90 rounded-xl border border-indigo-100/80">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase truncate">{fromAcc.name}</p>
+                    <p className={`font-black text-xs ${fromBalAfter < 0 ? "text-red-600" : "text-slate-700"}`}>
+                      {formatRupiah(fromBalAfter)}
+                    </p>
+                    <p className="text-[10px] text-rose-500 font-medium">-{formatRupiah(numAmount)}</p>
+                  </div>
+                  <div className="p-2.5 bg-white/90 rounded-xl border border-indigo-100/80">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase truncate">{toAcc.name}</p>
+                    <p className="font-black text-xs text-slate-700">{formatRupiah(toBalAfter)}</p>
+                    <p className="text-[10px] text-emerald-600 font-medium">+{formatRupiah(numAmount)}</p>
+                  </div>
+                </div>
+
+                {isOverBalance && (
+                  <div className="p-2 bg-amber-100/80 border border-amber-200 rounded-xl text-[11px] text-amber-800 flex items-center gap-1.5 font-medium">
+                    <AlertTriangle size={13} className="shrink-0 text-amber-600" />
+                    <span>Perhatian: Nominal transfer melebihi saldo kas asal saat ini.</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Keterangan Catatan */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Catatan / Alasan Transfer (Opsional)
+              </label>
               <input
                 type="text"
-                inputMode="numeric"
-                required
-                value={amount}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "");
-                  if (!val) {
-                    setAmount("");
-                  } else {
-                    setAmount(parseInt(val, 10).toLocaleString("id-ID"));
-                  }
-                }}
-                placeholder="0"
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-lg font-bold text-slate-800 transition-all"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Contoh: Isi saldo dompet tunai mingguan"
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm font-medium text-slate-800 transition-all placeholder:text-slate-400"
               />
             </div>
           </div>
 
-          {/* Keterangan Catatan */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              Catatan / Alasan Transfer (Opsional)
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Contoh: Operan saldo mingguan, bayar SPP..."
-              className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800 transition-all font-medium text-sm"
-            />
-          </div>
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="animate-spin" size={20} /> : <ArrowLeftRight size={20} />}
+            Simpan Transfer
+          </button>
+        </form>
+      )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg bg-blue-600 hover:bg-blue-700 shadow-blue-200 transition-all flex items-center justify-center gap-2 ${
-            loading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin" size={24} />
-              Memproses Transfer...
-            </>
-          ) : (
-            "Kirim Transfer"
-          )}
-        </button>
-      </form>
-
-      {/* Konfirmasi Transfer (Pre-Save Modal) */}
+      {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 pb-safe">
-            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
-            
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
-                <CheckCircle size={32} />
-              </div>
-              <h2 className="text-xl font-bold text-slate-800">Konfirmasi Transfer</h2>
-              <p className="text-sm text-slate-500 mt-1">Pastikan nominal dan tujuan sudah benar</p>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <CheckCircle size={24} />
             </div>
-
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-6">
-              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Nominal</span>
-                <span className="text-lg font-black text-blue-600">Rp {amount}</span>
-              </div>
-              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Dari Kas</span>
-                <span className="text-sm font-bold text-slate-700">{accounts.find(a => a.id === fromAccountId)?.name}</span>
-              </div>
-              <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Ke Kas</span>
-                <span className="text-sm font-bold text-emerald-600">{accounts.find(a => a.id === toAccountId)?.name}</span>
-              </div>
-              <div className="flex justify-between items-start pt-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase mt-0.5">Catatan</span>
-                <span className="text-sm font-medium text-slate-700 text-right max-w-[60%]">{description || '-'}</span>
+            <div className="text-center">
+              <h3 className="text-base font-black text-slate-800 mb-1">Konfirmasi Transfer</h3>
+              <p className="text-xs text-slate-500 mb-3">Pastikan rincian pemindahan saldo sudah benar.</p>
+              
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs space-y-2 text-left">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Dari:</span>
+                  <span className="font-bold text-slate-700">{fromAcc?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ke:</span>
+                  <span className="font-bold text-slate-700">{toAcc?.name}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-200/60 pt-1.5">
+                  <span className="text-slate-400">Nominal:</span>
+                  <span className="font-black text-indigo-600 text-sm">{formatRupiah(numAmount)}</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <button 
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl text-xs hover:bg-slate-200 transition-colors"
               >
                 Batal
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={handleSaveTransaction}
-                disabled={loading}
-                className="flex-1 py-3.5 text-white font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 rounded-xl transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-2xl text-xs hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Yakin & Kirim'}
+                Ya, Transfer
               </button>
             </div>
           </div>
         </div>
-      )}
-      </>
       )}
     </main>
   );
@@ -333,7 +469,13 @@ function TransferFormContent() {
 
 export default function TransferPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Memuat...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex justify-center items-center">
+          <Loader2 className="animate-spin text-indigo-600" size={32} />
+        </div>
+      }
+    >
       <TransferFormContent />
     </Suspense>
   );

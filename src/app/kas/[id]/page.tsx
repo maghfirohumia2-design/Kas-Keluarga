@@ -233,7 +233,7 @@ export default function KasDashboardPage() {
             <span className="hidden sm:inline">Laporan</span>
           </Link>
           <Link
-            href="/transaksi/transfer"
+            href={`/transaksi/transfer?fromId=${accountId}`}
             className="p-2.5 bg-white border border-slate-200/80 rounded-2xl text-slate-600 hover:text-emerald-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold"
             title="Transfer Antar Kas"
           >

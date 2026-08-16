@@ -13,24 +13,35 @@ import Link from "next/link";
 import Image from "next/image";
 import { Account } from "@/types/database";
 import { HomeDashboardSkeleton } from "@/components/ui/Skeleton";
+import MultiAccountMatrix from "@/components/home/MultiAccountMatrix";
 
 // Fungsi ikon per kas (Gambar 3D)
 const getIconForAccount = (name: string) => {
   if (!name) return "/icons/umum.jpg";
   const lowerName = name.toLowerCase();
   
-  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return "/icons/rumah.jpg";
-  if (lowerName.includes("it") || lowerName.includes("komputer") || lowerName.includes("tech")) return "/icons/it.jpg";
-  if (lowerName.includes("spv") || lowerName.includes("supervisor") || lowerName.includes("psv") || lowerName.includes("laporan")) return "/icons/spv.jpg";
-  if (lowerName.includes("kantor") || lowerName.includes("kerja")) return "/icons/kantor.jpg";
-  if (lowerName.includes("sekolah") || lowerName.includes("pendidikan") || lowerName.includes("kuliah") || lowerName.includes("paud")) return "/icons/pendidikan.jpg";
-  if (lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return "/icons/mobil.jpg";
-  if (lowerName.includes("belanja") || lowerName.includes("toko")) return "/icons/belanja.jpg";
+  if (lowerName.includes("bca")) return "/icons/bca.png";
+  if (lowerName.includes("bri")) return "/icons/bri.png";
+  if (lowerName.includes("mandiri")) return "/icons/mandiri.png";
+  if (lowerName.includes("bni")) return "/icons/bni.png";
+  if (lowerName.includes("dana")) return "/icons/dana.png";
+  if (lowerName.includes("gopay")) return "/icons/gopay.png";
+  if (lowerName.includes("ovo")) return "/icons/ovo.png";
+  if (lowerName.includes("shopee") || lowerName.includes("spay")) return "/icons/spay.png";
+  if (lowerName.includes("dompet") || lowerName.includes("tunai") || lowerName.includes("cash")) return "/icons/tunai.png";
+  if (lowerName.includes("emas") || lowerName.includes("gold")) return "/icons/emas.png";
+  
   return "/icons/umum.jpg";
 };
 
+interface AccountWithBalance extends Account {
+  calculatedBalance: number;
+}
+
 export default function Home() {
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountsWithBalance, setAccountsWithBalance] = useState<AccountWithBalance[]>([]);
+  const [totalFamilyBalance, setTotalFamilyBalance] = useState<number>(0);
   const [monthlyExpenses, setMonthlyExpenses] = useState<Record<string, number>>({});
   const [accountsError, setAccountsError] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -74,6 +85,24 @@ export default function Home() {
         });
         
         setMonthlyExpenses(newMonthlyExpenses);
+
+        // Hitung Saldo Tiap Kas & Total Saldo Keluarga
+        let totalBal = 0;
+        const calculatedAccs: AccountWithBalance[] = accs.map((acc) => {
+          const accTxs = transactions?.filter((t) => t.account_id === acc.id) || [];
+          const income = accTxs
+            .filter((t) => t.type === 'income')
+            .reduce((s, t) => s + Number(t.amount || 0), 0);
+          const expense = accTxs
+            .filter((t) => t.type === 'expense')
+            .reduce((s, t) => s + Number(t.amount || 0), 0);
+          const curBal = Number(acc.initial_balance || 0) + (income - expense);
+          totalBal += curBal;
+          return { ...acc, calculatedBalance: curBal };
+        });
+
+        setAccountsWithBalance(calculatedAccs);
+        setTotalFamilyBalance(totalBal);
       }
       setLoading(false);
     }
@@ -97,7 +126,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Full-width hero header */}
-      <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 pb-20 pt-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)] relative">
+      <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-800 pb-16 pt-0 shadow-[0_10px_40px_rgba(16,185,129,0.3)] relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="max-w-6xl mx-auto px-6 pt-8 relative z-10">
           {/* Header Profile */}
@@ -134,7 +163,13 @@ export default function Home() {
       </div>
 
       {/* Main Content Container */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-10 pb-28 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 pb-28 relative z-10 space-y-5">
+        {/* Multi-Account Asset Proportion Matrix */}
+        <MultiAccountMatrix
+          accounts={accountsWithBalance}
+          totalBalance={totalFamilyBalance}
+        />
+
         {/* Menu Kas Container */}
         <div className="bg-white/95 backdrop-blur-2xl rounded-[32px] p-6 shadow-xl shadow-slate-200/50 border border-white/50 min-h-[200px]">
         {accountsError && (
@@ -195,7 +230,7 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Quick Actions Grid: Laporan & Tagihan Rutin */}
+            {/* Quick Actions Grid: Laporan, Tagihan, & Hutang Piutang */}
             <div className="mt-6 pt-5 border-t border-slate-100 space-y-2.5">
               {/* Tagihan Rutin Banner */}
               <div className="p-3 bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-white rounded-2xl border border-amber-100/80 flex items-center justify-between gap-3 shadow-sm">
@@ -259,10 +294,11 @@ export default function Home() {
             </div>
 
             {(!accounts || accounts.length === 0) && !accountsError && (
-              <div className="py-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-2xl mt-4">
-                <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
-                <p className="font-medium text-slate-600">Belum ada Menu Kas</p>
-                <p className="text-xs mt-1">Tambahkan kas baru untuk memulai.</p>
+              <div className="text-center py-8">
+                <p className="text-slate-400 text-sm">Belum ada akun kas yang dibuat.</p>
+                <Link href="/profil" className="text-emerald-600 text-sm font-semibold hover:underline mt-2 inline-block">
+                  Tambah Akun Kas di Profil
+                </Link>
               </div>
             )}
           </>
