@@ -234,67 +234,40 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Quick Actions Grid: Laporan, Tagihan, & Hutang Piutang */}
-            <div className="mt-6 pt-5 border-t border-slate-100 space-y-2.5">
-              {/* Tagihan Rutin Banner */}
-              <div className="p-3 bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-white rounded-2xl border border-amber-100/80 flex items-center justify-between gap-3 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
-                    <Receipt size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-slate-800">Tagihan Rutin & Pengingat</h3>
-                    <p className="text-[10px] text-slate-400 font-medium">Pantau listrik, WiFi, SPP & bayar tepat waktu</p>
-                  </div>
+            {/* Quick Action Shortcuts: Tagihan, Hutang Piutang, Laporan */}
+            <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-2.5">
+              <Link
+                href="/tagihan"
+                className="p-3 bg-amber-50/60 hover:bg-amber-50 border border-amber-100/80 rounded-2xl flex flex-col items-center text-center transition-all active:scale-95 shadow-sm"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center mb-1.5 shadow-sm">
+                  <Receipt size={17} />
                 </div>
+                <span className="text-xs font-bold text-slate-800">Tagihan</span>
+                <span className="text-[10px] text-slate-400 font-medium">Rutin & Bulanan</span>
+              </Link>
 
-                <Link
-                  href="/tagihan"
-                  className="px-3 py-1.5 bg-white border border-amber-200 text-amber-800 hover:bg-amber-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
-                >
-                  Buka Tagihan
-                </Link>
-              </div>
-
-              {/* Catatan Hutang & Piutang Banner */}
-              <div className="p-3 bg-gradient-to-r from-rose-50/70 via-red-50/40 to-white rounded-2xl border border-red-100/80 flex items-center justify-between gap-3 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 to-red-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-red-200">
-                    <CircleDollarSign size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-slate-800">Catatan Hutang & Piutang</h3>
-                    <p className="text-[10px] text-slate-400 font-medium">Buku pinjaman keluarga & rekap cicilan</p>
-                  </div>
+              <Link
+                href="/hutang-piutang"
+                className="p-3 bg-rose-50/60 hover:bg-rose-50 border border-rose-100/80 rounded-2xl flex flex-col items-center text-center transition-all active:scale-95 shadow-sm"
+              >
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-red-600 text-white flex items-center justify-center mb-1.5 shadow-sm">
+                  <CircleDollarSign size={17} />
                 </div>
+                <span className="text-xs font-bold text-slate-800">Hutang Piutang</span>
+                <span className="text-[10px] text-slate-400 font-medium">Buku Pinjaman</span>
+              </Link>
 
-                <Link
-                  href="/hutang-piutang"
-                  className="px-3 py-1.5 bg-white border border-red-200 text-red-700 hover:bg-red-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
-                >
-                  Buka Hutang
-                </Link>
-              </div>
-
-              {/* Laporan & Ekspor Arus Kas Banner */}
-              <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                    <BarChart3 size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-slate-800">Laporan & Ekspor Arus Kas</h3>
-                    <p className="text-[10px] text-slate-400 font-medium">Analisis tren, cetak PDF, atau unduh CSV/Excel</p>
-                  </div>
+              <Link
+                href="/laporan"
+                className="p-3 bg-blue-50/60 hover:bg-blue-50 border border-blue-100/80 rounded-2xl flex flex-col items-center text-center transition-all active:scale-95 shadow-sm"
+              >
+                <div className="w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center mb-1.5 shadow-sm">
+                  <BarChart3 size={17} />
                 </div>
-
-                <Link
-                  href="/laporan"
-                  className="px-3 py-1.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
-                >
-                  Buka Laporan
-                </Link>
-              </div>
+                <span className="text-xs font-bold text-slate-800">Laporan</span>
+                <span className="text-[10px] text-slate-400 font-medium">Analisis & Ekspor</span>
+              </Link>
             </div>
 
             {(!accounts || accounts.length === 0) && !accountsError && (
