@@ -1,9 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Wallet, Plus, Edit2, Trash2, X, Loader2, CheckCircle2, AlertCircle, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Account } from "@/types/database";
+
+export const AVAILABLE_KAS_ICONS = [
+  { label: "Rumah / Keluarga", path: "/icons/rumah.jpg" },
+  { label: "Pendidikan / PAUD", path: "/icons/pendidikan.jpg" },
+  { label: "SPV / Gedung", path: "/icons/spv.jpg" },
+  { label: "Belanja / Toko", path: "/icons/belanja.jpg" },
+  { label: "IT / Tabungan", path: "/icons/it.jpg" },
+  { label: "Mobil / Kendaraan", path: "/icons/mobil.jpg" },
+  { label: "Kantor / Bisnis", path: "/icons/kantor.jpg" },
+  { label: "Kas Umum / Dompet", path: "/icons/umum.jpg" },
+];
 
 interface ManageKasModalProps {
   isOpen: boolean;
@@ -25,12 +37,15 @@ export default function ManageKasModal({
   // State: Tambah Kas
   const [newKasName, setNewKasName] = useState("");
   const [newKasDesc, setNewKasDesc] = useState("");
+  const [newKasIcon, setNewKasIcon] = useState("/icons/umum.jpg");
   const [isSubmittingKas, setIsSubmittingKas] = useState(false);
 
   // State: Edit Kas
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedKasToEdit, setSelectedKasToEdit] = useState<Account | null>(null);
   const [editKasName, setEditKasName] = useState("");
+  const [editKasDesc, setEditKasDesc] = useState("");
+  const [editKasIcon, setEditKasIcon] = useState("/icons/umum.jpg");
   const [isEditingKasLoading, setIsEditingKasLoading] = useState(false);
   const [editKasMessage, setEditKasMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
 
@@ -52,13 +67,15 @@ export default function ManageKasModal({
     try {
       const { error } = await supabase.from("accounts").insert({
         name: newKasName.trim(),
-        description: newKasDesc.trim() || null
+        description: newKasDesc.trim() || null,
+        icon: newKasIcon || "/icons/umum.jpg"
       });
 
       if (error) throw error;
 
       setNewKasName("");
       setNewKasDesc("");
+      setNewKasIcon("/icons/umum.jpg");
       setActiveTab("list");
       onKasChanged();
     } catch {
@@ -72,6 +89,8 @@ export default function ManageKasModal({
   const handleOpenEdit = (acc: Account) => {
     setSelectedKasToEdit(acc);
     setEditKasName(acc.name);
+    setEditKasDesc(acc.description || "");
+    setEditKasIcon(acc.icon || "/icons/umum.jpg");
     setEditKasMessage(null);
     setShowEditModal(true);
   };
@@ -84,19 +103,21 @@ export default function ManageKasModal({
     setEditKasMessage(null);
     try {
       const { error } = await supabase.from("accounts").update({
-        name: editKasName.trim()
+        name: editKasName.trim(),
+        description: editKasDesc.trim() || null,
+        icon: editKasIcon || "/icons/umum.jpg"
       }).eq("id", selectedKasToEdit.id);
 
       if (error) throw error;
 
-      setEditKasMessage({ text: "Nama Kas berhasil diubah!", type: "success" });
+      setEditKasMessage({ text: "Perubahan Kas berhasil disimpan!", type: "success" });
       setTimeout(() => {
         setShowEditModal(false);
         setEditKasMessage(null);
         onKasChanged();
-      }, 1200);
+      }, 1000);
     } catch {
-      setEditKasMessage({ text: "Gagal mengubah nama Kas.", type: "error" });
+      setEditKasMessage({ text: "Gagal mengubah data Kas.", type: "error" });
     } finally {
       setIsEditingKasLoading(false);
     }
@@ -168,13 +189,13 @@ export default function ManageKasModal({
     <>
       {/* Modal Utama: Kelola Kas */}
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-        <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 pb-safe max-h-[85vh] flex flex-col">
+        <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 pb-safe max-h-[90vh] flex flex-col">
           <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
 
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
               <Wallet className="text-emerald-500" size={20} />
-              Kelola Kas / Dompet
+              Kelola Kas & Ikon
             </h3>
             <button 
               type="button"
@@ -211,19 +232,31 @@ export default function ManageKasModal({
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
               {accounts.map(acc => (
                 <div key={acc.id} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-black text-slate-800">{acc.name}</h4>
-                    <p className="text-[11px] text-slate-400">{acc.description || "Tanpa deskripsi"}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 p-0.5 relative overflow-hidden shadow-sm shrink-0">
+                      <Image
+                        src={acc.icon || "/icons/umum.jpg"}
+                        alt={acc.name}
+                        fill
+                        className="object-cover rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-800">{acc.name}</h4>
+                      <p className="text-[11px] text-slate-400 line-clamp-1">{acc.description || "Tanpa deskripsi"}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
+                      type="button"
                       onClick={() => handleOpenEdit(acc)}
                       className="p-2 text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl transition-colors"
-                      title="Ubah Nama Kas"
+                      title="Ubah Nama & Ikon Kas"
                     >
                       <Edit2 size={14} />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleOpenDelete(acc)}
                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-white rounded-xl transition-colors"
                       title="Hapus Kas"
@@ -235,7 +268,7 @@ export default function ManageKasModal({
               ))}
             </div>
           ) : (
-            <form onSubmit={handleAddKas} className="space-y-4">
+            <form onSubmit={handleAddKas} className="flex-1 overflow-y-auto space-y-4 pr-1">
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nama Kas / Dompet
@@ -263,6 +296,34 @@ export default function ManageKasModal({
                 />
               </div>
 
+              {/* Icon Picker */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Pilih Gambar Ikon 3D
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {AVAILABLE_KAS_ICONS.map((ic) => (
+                    <button
+                      key={ic.path}
+                      type="button"
+                      onClick={() => setNewKasIcon(ic.path)}
+                      className={`p-1.5 rounded-2xl border flex flex-col items-center gap-1 transition-all ${
+                        newKasIcon === ic.path
+                          ? "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-400/30 scale-105"
+                          : "bg-slate-50 border-slate-200 hover:bg-white"
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-xl relative overflow-hidden">
+                        <Image src={ic.path} alt={ic.label} fill className="object-cover" />
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-600 truncate max-w-full">
+                        {ic.label.split(" ")[0]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={isSubmittingKas || !newKasName.trim()}
@@ -285,12 +346,12 @@ export default function ManageKasModal({
         </div>
       </div>
 
-      {/* Sub-Modal: Edit Nama Kas */}
+      {/* Sub-Modal: Edit Nama & Ikon Kas */}
       {showEditModal && selectedKasToEdit && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
-            <h4 className="text-base font-black text-slate-800 mb-2">Ubah Nama Kas</h4>
-            <p className="text-xs text-slate-400 mb-4">Ganti nama identitas untuk kas ini.</p>
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl max-h-[90vh] flex flex-col">
+            <h4 className="text-base font-black text-slate-800 mb-1">Ubah Nama & Ikon Kas</h4>
+            <p className="text-xs text-slate-400 mb-4">Ganti nama atau ikon visual untuk kas ini.</p>
 
             {editKasMessage && (
               <div className={`p-3 rounded-2xl mb-4 text-xs font-bold flex items-center gap-2 ${
@@ -303,16 +364,63 @@ export default function ManageKasModal({
               </div>
             )}
 
-            <form onSubmit={handleSaveEditKas} className="space-y-4">
-              <input
-                type="text"
-                required
-                value={editKasName}
-                onChange={(e) => setEditKasName(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-              <div className="flex gap-2">
+            <form onSubmit={handleSaveEditKas} className="flex-1 overflow-y-auto space-y-4 pr-1">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Nama Kas
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editKasName}
+                  onChange={(e) => setEditKasName(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Deskripsi Singkat
+                </label>
+                <input
+                  type="text"
+                  value={editKasDesc}
+                  onChange={(e) => setEditKasDesc(e.target.value)}
+                  placeholder="Deskripsi kas..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Icon Picker */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Pilih Gambar Ikon 3D
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {AVAILABLE_KAS_ICONS.map((ic) => (
+                    <button
+                      key={ic.path}
+                      type="button"
+                      onClick={() => setEditKasIcon(ic.path)}
+                      className={`p-1.5 rounded-2xl border flex flex-col items-center gap-1 transition-all ${
+                        editKasIcon === ic.path
+                          ? "bg-blue-50 border-blue-500 ring-2 ring-blue-400/30 scale-105"
+                          : "bg-slate-50 border-slate-200 hover:bg-white"
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-xl relative overflow-hidden">
+                        <Image src={ic.path} alt={ic.label} fill className="object-cover" />
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-600 truncate max-w-full">
+                        {ic.label.split(" ")[0]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}

@@ -201,7 +201,7 @@ export default function Home() {
                   {/* Icon Box */}
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] flex items-center justify-center mb-2 shadow-sm bg-white p-1 border border-slate-100/80 group-hover:shadow-md group-hover:border-slate-200 transition-all">
                     <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-inner">
-                      <Image src={getIconForAccount(account.name)} alt={account.name} fill className="object-cover" sizes="64px" />
+                      <Image src={account.icon || getIconForAccount(account.name)} alt={account.name} fill className="object-cover" sizes="64px" />
                     </div>
                   </div>
                   

@@ -8,6 +8,7 @@ export interface Account {
   description?: string | null;
   initial_balance: number;
   budget_limit: number;
+  icon?: string | null;
   created_at?: string;
 }
 
