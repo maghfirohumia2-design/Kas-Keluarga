@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import { 
@@ -8,13 +8,16 @@ import {
   Plus, 
   Loader2, 
   Wallet, 
-  ArrowRight, 
   Trash2, 
   Edit3, 
   Sparkles, 
   Banknote, 
   X,
-  Trophy
+  Trophy,
+  Calendar,
+  Clock,
+  Medal,
+  Award
 } from "lucide-react";
 import { FamilyGoal, Account } from "@/types/database";
 import { formatRupiah, formatNumberInput, parseNumberInput } from "@/lib/format";
@@ -27,12 +30,15 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<FamilyGoal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "completed">("all");
 
   // Modal State: Tambah / Edit Target
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<FamilyGoal | null>(null);
   const [goalTitle, setGoalTitle] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
+  const [goalTargetDate, setGoalTargetDate] = useState("");
+  const [goalDescription, setGoalDescription] = useState("");
   const [goalIcon, setGoalIcon] = useState("🎯");
   const [isSavingGoal, setIsSavingGoal] = useState(false);
 
@@ -86,11 +92,23 @@ export default function GoalsPage() {
     loadData();
   }, []);
 
+  // Filtered Goals
+  const filteredGoals = useMemo(() => {
+    return goals.filter((g) => {
+      const isCompleted = g.current_amount >= g.target_amount;
+      if (activeTab === "active") return !isCompleted;
+      if (activeTab === "completed") return isCompleted;
+      return true;
+    });
+  }, [goals, activeTab]);
+
   // --- Handlers Buat / Edit Goal ---
   const handleOpenCreateGoal = () => {
     setEditingGoal(null);
     setGoalTitle("");
     setGoalTarget("");
+    setGoalTargetDate("");
+    setGoalDescription("");
     setGoalIcon("🎯");
     setShowGoalModal(true);
   };
@@ -99,6 +117,8 @@ export default function GoalsPage() {
     setEditingGoal(goal);
     setGoalTitle(goal.title);
     setGoalTarget(goal.target_amount.toLocaleString("id-ID"));
+    setGoalTargetDate(goal.target_date || "");
+    setGoalDescription(goal.description || "");
     setGoalIcon(goal.icon || "🎯");
     setShowGoalModal(true);
   };
@@ -113,14 +133,18 @@ export default function GoalsPage() {
 
     setIsSavingGoal(true);
     try {
+      const payload = {
+        title: goalTitle.trim(),
+        target_amount: numTarget,
+        target_date: goalTargetDate || null,
+        description: goalDescription.trim() || null,
+        icon: goalIcon,
+      };
+
       if (editingGoal) {
         const { error } = await supabase
           .from("family_goals")
-          .update({
-            title: goalTitle.trim(),
-            target_amount: numTarget,
-            icon: goalIcon
-          })
+          .update(payload)
           .eq("id", editingGoal.id);
 
         if (error) throw error;
@@ -129,10 +153,8 @@ export default function GoalsPage() {
         const { error } = await supabase
           .from("family_goals")
           .insert({
-            title: goalTitle.trim(),
-            target_amount: numTarget,
+            ...payload,
             current_amount: 0,
-            icon: goalIcon
           });
 
         if (error) throw error;
@@ -181,10 +203,12 @@ export default function GoalsPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Jika potong dari Kas/Dompet, buat transaksi pengeluaran
+      const contributorName = profile?.full_name || "Anggota Keluarga";
+      const goalName = selectedGoal.title;
+
       if (sourceType === "account") {
         if (!selectedAccountId) {
-          alert("Pilih kas asal yang akan dipotong!");
+          alert("Pilih akun kas sumber dana!");
           setIsSubmitting(false);
           return;
         }
@@ -193,50 +217,44 @@ export default function GoalsPage() {
           account_id: selectedAccountId,
           type: "expense",
           amount: numAmount,
-          description: `Patungan Impian: ${selectedGoal.title}`,
+          description: `Patungan Impian: ${goalName}`,
           category: "🎯 Patungan Impian",
-          user_name: profile?.full_name || "Anggota",
-          is_transfer: false
+          user_name: contributorName,
+          is_transfer: false,
         });
 
         if (txError) throw txError;
       }
 
-      // 2. Tambah nominal terkumpul di family_goals
-      const newTotal = selectedGoal.current_amount + numAmount;
+      const newCurrent = Number(selectedGoal.current_amount || 0) + numAmount;
       const { error: goalError } = await supabase
         .from("family_goals")
-        .update({ current_amount: newTotal })
+        .update({ current_amount: newCurrent })
         .eq("id", selectedGoal.id);
 
       if (goalError) throw goalError;
 
-      // 3. Tambah reward poin untuk member (Rp 1.000 = 1 poin)
-      if (profile && profile.role === "member") {
-        const bonusPoints = Math.floor(numAmount / 1000);
-        if (bonusPoints > 0) {
-          await supabase
-            .from("profiles")
-            .update({ points: (profile.points || 0) + bonusPoints })
-            .eq("id", profile.id);
-          alert(`🎉 Hebat! Patungan ${formatRupiah(numAmount)} berhasil dicatat. Kamu mendapatkan +${bonusPoints} Poin Reward!`);
-        } else {
-          alert(`✅ Patungan ${formatRupiah(numAmount)} berhasil dicatat!`);
-        }
-      } else {
-        alert(`✅ Patungan ${formatRupiah(numAmount)} berhasil dicatat!`);
+      // Bonus Gamifikasi Poin
+      if (profile?.id) {
+        const bonusPoints = 10;
+        await supabase
+          .from("profiles")
+          .update({ points: Number(profile.points || 0) + bonusPoints })
+          .eq("id", profile.id);
       }
 
+      alert(`🎉 Terima kasih ${contributorName}! Berhasil setor ${formatRupiah(numAmount)} untuk impian "${goalName}" (+10 Poin Gamifikasi).`);
       setShowContributeModal(false);
       refreshData();
-    } catch {
-      alert("Gagal memproses patungan. Silakan coba lagi.");
+    } catch (err) {
+      console.error(err);
+      alert("Gagal memproses setoran patungan.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // --- Handlers Pencairan Dana ---
+  // --- Handlers Cairkan Dana ---
   const handleOpenCairkan = (goal: FamilyGoal) => {
     if (goal.current_amount <= 0) {
       alert("Dana patungan ini masih kosong (Rp 0).");
@@ -270,7 +288,7 @@ export default function GoalsPage() {
           description: `Pencairan Patungan: ${cairkanGoal.title}`,
           category: "🎯 Patungan Impian",
           user_name: profile?.full_name || "Super Admin",
-          is_transfer: false
+          is_transfer: false,
         });
 
         if (txError) throw txError;
@@ -293,6 +311,17 @@ export default function GoalsPage() {
     }
   };
 
+  const setContributePreset = (add: number) => {
+    const cur = parseNumberInput(amount);
+    setAmount(formatNumberInput((cur + add).toString()));
+  };
+
+  const setFullContribute = (sisa: number) => {
+    if (sisa > 0) {
+      setAmount(formatNumberInput(sisa.toString()));
+    }
+  };
+
   if (loading) {
     return <GoalsSkeleton />;
   }
@@ -300,7 +329,7 @@ export default function GoalsPage() {
   return (
     <main className="p-6 pb-28 min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="mb-6 pt-4 flex justify-between items-center">
+      <header className="mb-5 pt-2 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
             <Target className="text-orange-500" />
@@ -310,6 +339,7 @@ export default function GoalsPage() {
         </div>
         {profile?.role === "super_admin" && (
           <button 
+            type="button"
             onClick={handleOpenCreateGoal}
             className="text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow-md shadow-orange-200 hover:brightness-105 active:scale-95 transition-all"
           >
@@ -318,150 +348,227 @@ export default function GoalsPage() {
         )}
       </header>
 
-      {/* List Goals */}
-      <div className="space-y-5">
-        {goals.map(goal => {
-          const progress = Math.min(Math.round((goal.current_amount / goal.target_amount) * 100), 100);
-          const isReached = goal.current_amount >= goal.target_amount;
-          const sisaNominal = Math.max(0, goal.target_amount - goal.current_amount);
-
-          return (
-            <div 
-              key={goal.id} 
-              className={`bg-white rounded-3xl p-5 border transition-all duration-300 relative overflow-hidden shadow-sm hover:shadow-md ${
-                isReached ? 'border-emerald-200 ring-2 ring-emerald-400/20' : 'border-slate-100'
-              }`}
-            >
-              {/* Badge Tercapai */}
-              {isReached && (
-                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-sm">
-                  <Trophy size={12} /> Target Tercapai!
-                </div>
-              )}
-
-              <div className="flex justify-between items-start mb-4 relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-13 h-13 bg-orange-50 text-2xl flex items-center justify-center rounded-2xl shadow-inner border border-orange-100/80 shrink-0">
-                    {goal.icon || "🎯"}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-lg line-clamp-1">{goal.title}</h3>
-                    <p className="text-xs font-semibold text-orange-600">
-                      Terkumpul {formatRupiah(goal.current_amount)}
-                    </p>
-                  </div>
-                </div>
-
-                {profile?.role === "super_admin" && (
-                  <div className="flex items-center gap-1">
-                    <button 
-                      onClick={() => handleOpenEditGoal(goal)}
-                      className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-colors"
-                      title="Edit Target"
-                    >
-                      <Edit3 size={15} />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteGoal(goal)}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                      title="Hapus Target"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Target & Sisa Box */}
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-4 border border-slate-100">
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target Total</p>
-                  <p className="text-sm font-black text-slate-800">{formatRupiah(goal.target_amount)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kekurangan</p>
-                  <p className={`text-sm font-black ${isReached ? 'text-emerald-600' : 'text-slate-700'}`}>
-                    {isReached ? 'Lunas / Penuh' : formatRupiah(sisaNominal)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mb-5 relative z-10">
-                <div className="flex justify-between text-[11px] font-bold mb-1.5">
-                  <span className={isReached ? "text-emerald-600 flex items-center gap-1" : "text-orange-600"}>
-                    {isReached && <Sparkles size={13} />} {progress}% Tercapai
-                  </span>
-                  <span className="text-slate-400">{progress}% dari 100%</span>
-                </div>
-                <div className="h-3.5 bg-slate-100 rounded-full overflow-hidden shadow-inner p-0.5">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-1000 ease-out relative ${
-                      isReached 
-                        ? 'bg-gradient-to-r from-emerald-400 to-teal-500 shadow-sm shadow-emerald-200' 
-                        : 'bg-gradient-to-r from-orange-400 via-amber-500 to-rose-500 shadow-sm shadow-orange-200'
-                    }`}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 relative z-10">
-                <button 
-                  onClick={() => handleContributeClick(goal)}
-                  className="flex-1 py-3.5 bg-slate-900 text-white font-bold rounded-2xl text-xs hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-slate-200"
-                >
-                  <Wallet size={15} /> Ikut Patungan
-                </button>
-                {profile?.role === "super_admin" && (
-                  <button 
-                    onClick={() => handleOpenCairkan(goal)}
-                    className="flex-1 py-3.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold rounded-2xl text-xs hover:bg-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-1.5"
-                  >
-                    Cairkan Dana <ArrowRight size={15} />
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {goals.length === 0 && (
-          <div className="text-center py-16 px-4 bg-white rounded-3xl border border-dashed border-slate-200">
-            <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Target size={32} />
-            </div>
-            <h3 className="font-bold text-slate-800 text-base mb-1">Belum Ada Target Patungan</h3>
-            <p className="text-xs text-slate-400 max-w-xs mx-auto mb-6">
-              {profile?.role === "super_admin" 
-                ? "Mulai buat target impian keluarga seperti liburan, barang idaman, atau tabungan bersama." 
-                : "Super Admin belum membuat target patungan saat ini."}
-            </p>
-            {profile?.role === "super_admin" && (
-              <button 
-                onClick={handleOpenCreateGoal}
-                className="text-xs font-bold text-white bg-orange-500 px-5 py-2.5 rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all inline-flex items-center gap-1.5"
-              >
-                <Plus size={16} /> Buat Target Sekarang
-              </button>
-            )}
-          </div>
-        )}
+      {/* Filter Tabs */}
+      <div className="flex bg-slate-200/70 p-1 rounded-2xl mb-5 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => setActiveTab("all")}
+          className={`flex-1 py-2 rounded-xl transition-all ${
+            activeTab === "all" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          Semua ({goals.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("active")}
+          className={`flex-1 py-2 rounded-xl transition-all ${
+            activeTab === "active" ? "bg-white text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          Berjalan ({goals.filter((g) => g.current_amount < g.target_amount).length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("completed")}
+          className={`flex-1 py-2 rounded-xl transition-all ${
+            activeTab === "completed" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          Tercapai ({goals.filter((g) => g.current_amount >= g.target_amount).length})
+        </button>
       </div>
 
+      {/* List Goals */}
+      {filteredGoals.length === 0 ? (
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 text-center shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto mb-3">
+            <Target size={28} />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800 mb-1">
+            {activeTab === "completed" ? "Belum ada target yang tercapai" : "Belum Ada Target Impian"}
+          </h3>
+          <p className="text-xs text-slate-400 max-w-xs mx-auto mb-4">
+            Buat target patungan bersama seperti liburan, renovasi rumah, atau barang impian keluarga.
+          </p>
+          {profile?.role === "super_admin" && (
+            <button
+              type="button"
+              onClick={handleOpenCreateGoal}
+              className="px-4 py-2.5 bg-orange-500 text-white rounded-2xl text-xs font-bold hover:bg-orange-600 transition-colors shadow-md shadow-orange-200"
+            >
+              + Buat Target Pertama
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredGoals.map((goal) => {
+            const progress = Math.min(Math.round((goal.current_amount / goal.target_amount) * 100), 100);
+            const isReached = goal.current_amount >= goal.target_amount;
+            const sisaNominal = Math.max(0, goal.target_amount - goal.current_amount);
+
+            // Perhitungan Estimasi Bulanan
+            const now = new Date();
+            const targetD = goal.target_date ? new Date(goal.target_date) : null;
+            const isExpired = targetD && targetD < now;
+            let remainingMonths = 0;
+            let monthlySavingNeeded = 0;
+
+            if (targetD && !isExpired && !isReached && sisaNominal > 0) {
+              const diffTime = targetD.getTime() - now.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              remainingMonths = Math.max(Math.ceil(diffDays / 30), 1);
+              monthlySavingNeeded = Math.round(sisaNominal / remainingMonths);
+            }
+
+            return (
+              <div 
+                key={goal.id} 
+                className={`bg-white rounded-3xl p-5 border transition-all duration-300 relative overflow-hidden shadow-sm hover:shadow-md ${
+                  isReached ? 'border-emerald-200 ring-2 ring-emerald-400/20' : 'border-slate-100'
+                }`}
+              >
+                {/* Milestone Badge */}
+                <div className="absolute top-0 right-0">
+                  {isReached ? (
+                    <span className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-sm">
+                      <Trophy size={12} /> 100% Tercapai!
+                    </span>
+                  ) : progress >= 75 ? (
+                    <span className="bg-amber-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-sm">
+                      <Award size={12} /> 75% Hampir Sampai!
+                    </span>
+                  ) : progress >= 50 ? (
+                    <span className="bg-blue-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-sm">
+                      <Medal size={12} /> 50% Setengah Jalan!
+                    </span>
+                  ) : progress >= 25 ? (
+                    <span className="bg-purple-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-sm">
+                      <Sparkles size={12} /> 25% Awal yang Baik
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="flex justify-between items-start mb-3 relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-orange-50 text-2xl flex items-center justify-center rounded-2xl shadow-inner border border-orange-100/80 shrink-0">
+                      {goal.icon || "🎯"}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-base line-clamp-1">{goal.title}</h3>
+                      <p className="text-xs font-semibold text-orange-600">
+                        Terkumpul {formatRupiah(goal.current_amount)}
+                      </p>
+                      {goal.target_date && (
+                        <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium mt-0.5">
+                          <Calendar size={11} />
+                          <span>
+                            Target: {new Date(goal.target_date).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric"
+                            })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Super Admin Actions */}
+                  {profile?.role === "super_admin" && (
+                    <div className="flex items-center gap-1 pt-6">
+                      <button 
+                        type="button"
+                        onClick={() => handleOpenEditGoal(goal)}
+                        className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-100 transition-colors"
+                      >
+                        <Edit3 size={13} />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => handleDeleteGoal(goal)}
+                        className="w-8 h-8 rounded-full bg-slate-50 border border-red-100 text-red-500 flex items-center justify-center hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
+                <div className="space-y-1.5 mb-3.5">
+                  <div className="flex justify-between text-xs font-bold">
+                    <span className="text-slate-400 text-[10px]">Target: {formatRupiah(goal.target_amount)}</span>
+                    <span className={`text-xs font-black ${isReached ? 'text-emerald-600' : 'text-orange-600'}`}>
+                      {progress}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden shadow-inner">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        isReached ? 'bg-emerald-500' : 'bg-gradient-to-r from-orange-500 to-amber-400'
+                      }`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Smart Monthly Savings Recommendation Banner */}
+                {!isReached && monthlySavingNeeded > 0 && (
+                  <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] text-amber-900 flex items-start gap-2 mb-3">
+                    <Clock size={14} className="shrink-0 text-amber-600 mt-0.5" />
+                    <div>
+                      <span className="font-bold">Rekomendasi Tabungan:</span> Tabung{" "}
+                      <strong className="text-amber-800">{formatRupiah(monthlySavingNeeded)} / bulan</strong> selama{" "}
+                      <strong>{remainingMonths} bulan lagi</strong> untuk mencapai target tepat waktu.
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-1 border-t border-slate-50">
+                  <button 
+                    type="button"
+                    onClick={() => handleContributeClick(goal)}
+                    disabled={isReached}
+                    className={`flex-1 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      isReached 
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-200 hover:brightness-105 active:scale-95'
+                    }`}
+                  >
+                    <Plus size={15} /> Ikut Patungan
+                  </button>
+
+                  {profile?.role === "super_admin" && (
+                    <button 
+                      type="button"
+                      onClick={() => handleOpenCairkan(goal)}
+                      disabled={goal.current_amount <= 0}
+                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-colors disabled:opacity-40"
+                    >
+                      Cairkan Dana
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* ======================================================== */}
-      {/* MODAL 1: Buat / Edit Target Patungan */}
+      {/* MODAL 1: Tambah / Edit Target */}
       {/* ======================================================== */}
       {showGoalModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 pb-safe">
+          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 max-h-[90vh] flex flex-col pb-safe">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
             
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <Target className="text-orange-500" size={20} />
-                {editingGoal ? "Edit Target Patungan" : "Buat Target Patungan Baru"}
+              <h2 className="text-xl font-black text-slate-800">
+                {editingGoal ? "Edit Target Impian" : "Buat Target Baru"}
               </h2>
               <button 
                 type="button"
@@ -472,17 +579,17 @@ export default function GoalsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveGoal} className="space-y-4">
+            <form onSubmit={handleSaveGoal} className="flex-1 overflow-y-auto space-y-4 pr-1">
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Nama Target / Impian
+                  Nama Target
                 </label>
                 <input
                   type="text"
                   required
                   value={goalTitle}
                   onChange={(e) => setGoalTitle(e.target.value)}
-                  placeholder="Contoh: Liburan ke Bali, Beli Kulkas Baru"
+                  placeholder="Contoh: Liburan ke Bali, Beli Laptop Baru"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
                 />
               </div>
@@ -501,12 +608,28 @@ export default function GoalsPage() {
                 />
               </div>
 
+              {/* Target Tanggal Selesai */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Target Tanggal Tercapai (Opsional)
+                </label>
+                <input
+                  type="date"
+                  value={goalTargetDate}
+                  onChange={(e) => setGoalTargetDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Sistem akan otomatis menghitung rekomendasi tabungan per bulan.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Pilih Ikon Target
                 </label>
                 <div className="grid grid-cols-6 gap-2 pt-1">
-                  {PRESET_ICONS.map(ic => (
+                  {PRESET_ICONS.map((ic) => (
                     <button
                       key={ic}
                       type="button"
@@ -523,7 +646,7 @@ export default function GoalsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <button 
                   type="button"
                   onClick={() => setShowGoalModal(false)}
@@ -547,7 +670,7 @@ export default function GoalsPage() {
       {/* ======================================================== */}
       {/* MODAL 2: Ikut Patungan */}
       {/* ======================================================== */}
-      {showContributeModal && (
+      {showContributeModal && selectedGoal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 pb-safe">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
@@ -562,14 +685,58 @@ export default function GoalsPage() {
                 <X size={20} />
               </button>
             </div>
-            <p className="text-xs text-slate-500 mb-5">
-              Patungan bersama untuk impian: <span className="font-bold text-orange-600">{selectedGoal?.title}</span>
+            <p className="text-xs text-slate-500 mb-4">
+              Patungan bersama untuk impian: <span className="font-bold text-orange-600">{selectedGoal.title}</span>
             </p>
 
             <form onSubmit={submitContribution} className="space-y-4">
+              {/* Quick Nominal Presets */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Nominal Cepat
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setContributePreset(50000)}
+                    className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    +50 Rb
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContributePreset(100000)}
+                    className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    +100 Rb
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContributePreset(500000)}
+                    className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    +500 Rb
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContributePreset(1000000)}
+                    className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    +1 Jt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFullContribute(Math.max(0, selectedGoal.target_amount - selectedGoal.current_amount))}
+                    className="col-span-2 sm:col-span-1 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    Lunaskan
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Nominal Patungan
+                  Nominal Patungan (Rp)
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">Rp</span>
@@ -598,7 +765,7 @@ export default function GoalsPage() {
                         : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}
                   >
-                    <Wallet size={15} /> Potong Kas/Dompet
+                    <Wallet size={15} /> Potong Kas/Bank
                   </button>
                   <button
                     type="button"
@@ -609,7 +776,7 @@ export default function GoalsPage() {
                         : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}
                   >
-                    <Banknote size={15} /> Setor Tunai/Luar Kas
+                    <Banknote size={15} /> Uang Tunai / Celengan
                   </button>
                 </div>
               </div>
@@ -617,14 +784,14 @@ export default function GoalsPage() {
               {sourceType === "account" && (
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Pilih Kas Asal
+                    Pilih Kas Sumber Dana
                   </label>
                   <select
                     value={selectedAccountId}
                     onChange={(e) => setSelectedAccountId(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
                   >
-                    {accounts.map(acc => (
+                    {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
                         {acc.name}
                       </option>
@@ -633,14 +800,7 @@ export default function GoalsPage() {
                 </div>
               )}
 
-              {profile?.role === "member" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center gap-2 text-xs text-amber-800 font-semibold">
-                  <Sparkles className="text-amber-500 shrink-0" size={18} />
-                  <span>Setiap patungan Rp 1.000 kamu akan mendapatkan 1 Poin Reward Toko Keluarga!</span>
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-3">
                 <button 
                   type="button"
                   onClick={() => setShowContributeModal(false)}
@@ -651,9 +811,9 @@ export default function GoalsPage() {
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-3.5 text-white font-bold bg-orange-500 rounded-2xl text-xs flex items-center justify-center shadow-lg shadow-orange-200 disabled:opacity-50"
+                  className="flex-1 py-3.5 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl text-xs flex items-center justify-center shadow-lg shadow-orange-200 disabled:opacity-50"
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Transfer Sekarang'}
+                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : "Setor Sekarang"}
                 </button>
               </div>
             </form>
@@ -664,7 +824,7 @@ export default function GoalsPage() {
       {/* ======================================================== */}
       {/* MODAL 3: Cairkan Dana Patungan */}
       {/* ======================================================== */}
-      {showCairkanModal && (
+      {showCairkanModal && cairkanGoal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 pb-safe">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
@@ -680,10 +840,15 @@ export default function GoalsPage() {
               </button>
             </div>
             <p className="text-xs text-slate-500 mb-4">
-              Cairkan dana terkumpul sebesar <span className="font-black text-emerald-600">{formatRupiah(cairkanGoal?.current_amount)}</span> dari target <span className="font-bold text-slate-800">{cairkanGoal?.title}</span>.
+              Cairkan dana yang terkumpul untuk dibelanjakan: <span className="font-bold text-orange-600">{cairkanGoal.title}</span>
             </p>
 
             <form onSubmit={submitPencairan} className="space-y-4">
+              <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-orange-900">Total Dana Dicairkan:</span>
+                <span className="text-base font-black text-orange-600">{formatRupiah(cairkanGoal.current_amount)}</span>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                   Tujuan Penyetoran Dana
@@ -698,7 +863,7 @@ export default function GoalsPage() {
                         : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}
                   >
-                    <Wallet size={15} /> Setor ke Kas/Dompet
+                    <Wallet size={15} /> Masuk ke Kas/Bank
                   </button>
                   <button
                     type="button"
@@ -709,7 +874,7 @@ export default function GoalsPage() {
                         : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}
                   >
-                    <Banknote size={15} /> Tarik Tunai
+                    <Banknote size={15} /> Tunai / Diambil
                   </button>
                 </div>
               </div>
@@ -717,14 +882,14 @@ export default function GoalsPage() {
               {cairkanDestination === "account" && (
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Pilih Kas Tujuan Pemasukan
+                    Pilih Kas Tujuan
                   </label>
                   <select
                     value={cairkanAccountId}
                     onChange={(e) => setCairkanAccountId(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                   >
-                    {accounts.map(acc => (
+                    {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
                         {acc.name}
                       </option>
@@ -733,7 +898,7 @@ export default function GoalsPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-3">
                 <button 
                   type="button"
                   onClick={() => setShowCairkanModal(false)}
@@ -744,16 +909,15 @@ export default function GoalsPage() {
                 <button 
                   type="submit"
                   disabled={isCairkanLoading}
-                  className="flex-1 py-3.5 text-white font-bold bg-emerald-600 rounded-2xl text-xs flex items-center justify-center shadow-lg shadow-emerald-200 disabled:opacity-50"
+                  className="flex-1 py-3.5 text-white font-bold bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-xs flex items-center justify-center shadow-lg shadow-emerald-200 disabled:opacity-50 transition-all"
                 >
-                  {isCairkanLoading ? <Loader2 className="animate-spin" size={18} /> : 'Konfirmasi Pencairan'}
+                  {isCairkanLoading ? <Loader2 className="animate-spin" size={18} /> : "Cairkan Sekarang"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </main>
   );
 }
