@@ -14,7 +14,8 @@ import {
   UserPlus,
   BarChart3,
   Sparkles,
-  Receipt
+  Receipt,
+  CircleDollarSign
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
@@ -206,6 +207,22 @@ export default function ProfilPage() {
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Tagihan Rutin & Pengingat</h4>
                   <p className="text-[11px] text-slate-400">Kelola listrik, WiFi, SPP, & status pembayaran</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300" />
+            </Link>
+
+            <Link
+              href="/hutang-piutang"
+              className="w-full p-3.5 flex items-center justify-between rounded-2xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left border-t border-slate-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <CircleDollarSign size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Catatan Hutang & Piutang</h4>
+                  <p className="text-[11px] text-slate-400">Buku pinjaman keluarga & rekap cicilan</p>
                 </div>
               </div>
               <ChevronRight size={16} className="text-slate-300" />

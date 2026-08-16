@@ -106,3 +106,34 @@ export interface RecurringBill {
     name: string;
   } | null;
 }
+
+export type DebtType = "debt" | "loan"; // debt = Hutang (kita berhutang), loan = Piutang (orang lain berhutang ke kita)
+export type DebtStatus = "unpaid" | "partial" | "paid";
+
+export interface DebtLoan {
+  id: string;
+  type: DebtType;
+  person_name: string;
+  total_amount: number;
+  paid_amount: number;
+  due_date?: string | null;
+  description?: string | null;
+  account_id?: string | null;
+  status: DebtStatus;
+  created_at?: string;
+  accounts?: {
+    name: string;
+  } | null;
+}
+
+export interface DebtPayment {
+  id: string;
+  debt_id: string;
+  account_id?: string | null;
+  amount: number;
+  payment_date: string;
+  notes?: string | null;
+  accounts?: {
+    name: string;
+  } | null;
+}

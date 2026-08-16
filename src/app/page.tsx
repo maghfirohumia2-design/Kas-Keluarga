@@ -6,7 +6,8 @@ import {
   Wallet, 
   Settings,
   BarChart3,
-  Receipt
+  Receipt,
+  CircleDollarSign
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -213,6 +214,26 @@ export default function Home() {
                   className="px-3 py-1.5 bg-white border border-amber-200 text-amber-800 hover:bg-amber-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
                 >
                   Buka Tagihan
+                </Link>
+              </div>
+
+              {/* Catatan Hutang & Piutang Banner */}
+              <div className="p-3 bg-gradient-to-r from-rose-50/70 via-red-50/40 to-white rounded-2xl border border-red-100/80 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 to-red-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-red-200">
+                    <CircleDollarSign size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-800">Catatan Hutang & Piutang</h3>
+                    <p className="text-[10px] text-slate-400 font-medium">Buku pinjaman keluarga & rekap cicilan</p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/hutang-piutang"
+                  className="px-3 py-1.5 bg-white border border-red-200 text-red-700 hover:bg-red-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
+                >
+                  Buka Hutang
                 </Link>
               </div>
 
