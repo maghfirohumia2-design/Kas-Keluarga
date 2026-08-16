@@ -1,6 +1,9 @@
--- SQL Migration untuk Fitur Tagihan Rutin & Pengingat Bulanan
--- Jalankan query ini di Supabase SQL Editor jika belum dibuat
+-- ====================================================================
+-- SQL Migration: Tabel Tagihan Rutin & Pengingat Bulanan
+-- Salin SELURUH isi script ini dan klik RUN di Supabase SQL Editor
+-- ====================================================================
 
+-- 1. Buat Tabel recurring_bills
 CREATE TABLE IF NOT EXISTS public.recurring_bills (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
@@ -14,10 +17,16 @@ CREATE TABLE IF NOT EXISTS public.recurring_bills (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- RLS (Row Level Security)
+-- 2. Aktifkan Row Level Security (RLS)
 ALTER TABLE public.recurring_bills ENABLE ROW LEVEL SECURITY;
 
--- Policy untuk membaca & mengelola tagihan bagi pengguna yang terautentikasi
+-- 3. Hapus Policy Lama (jika ada) agar tidak duplikat
+DROP POLICY IF EXISTS "Allow authenticated users to read recurring bills" ON public.recurring_bills;
+DROP POLICY IF EXISTS "Allow authenticated users to insert recurring bills" ON public.recurring_bills;
+DROP POLICY IF EXISTS "Allow authenticated users to update recurring bills" ON public.recurring_bills;
+DROP POLICY IF EXISTS "Allow authenticated users to delete recurring bills" ON public.recurring_bills;
+
+-- 4. Buat Policy Baru
 CREATE POLICY "Allow authenticated users to read recurring bills"
   ON public.recurring_bills FOR SELECT
   TO authenticated
