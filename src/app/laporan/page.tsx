@@ -23,6 +23,8 @@ import FinancialSummaryCards from "@/components/laporan/FinancialSummaryCards";
 import MonthlyTrendChart from "@/components/laporan/MonthlyTrendChart";
 import CategoryDistribution from "@/components/laporan/CategoryDistribution";
 import ExportActionButtons from "@/components/laporan/ExportActionButtons";
+import CashflowIntelligenceCards from "@/components/laporan/CashflowIntelligenceCards";
+import CategoryBudgetCompliance from "@/components/laporan/CategoryBudgetCompliance";
 
 type PeriodPreset = "this_month" | "last_month" | "last_3_months" | "this_year" | "custom";
 
@@ -336,7 +338,16 @@ function LaporanContent() {
           {/* 2. Monthly Trend Chart */}
           <MonthlyTrendChart transactions={transactions} />
 
-          {/* 3. Category & Member Distribution */}
+          {/* 3. Cashflow Intelligence & Weekly Breakdown */}
+          <CashflowIntelligenceCards transactions={filteredTransactions} />
+
+          {/* 4. Category Budget Compliance */}
+          <CategoryBudgetCompliance
+            transactions={filteredTransactions}
+            categories={categories}
+          />
+
+          {/* 5. Category & Member Distribution */}
           <CategoryDistribution
             transactions={filteredTransactions}
             categories={categories}
