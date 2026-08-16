@@ -16,21 +16,18 @@ import { HomeDashboardSkeleton } from "@/components/ui/Skeleton";
 import MultiAccountMatrix from "@/components/home/MultiAccountMatrix";
 import DueBillsNotificationBanner from "@/components/home/DueBillsNotificationBanner";
 
-// Fungsi ikon per kas (Gambar 3D)
+// Fungsi ikon per kas (Gambar 3D unik)
 const getIconForAccount = (name: string) => {
   if (!name) return "/icons/umum.jpg";
   const lowerName = name.toLowerCase();
   
-  if (lowerName.includes("bca")) return "/icons/bca.png";
-  if (lowerName.includes("bri")) return "/icons/bri.png";
-  if (lowerName.includes("mandiri")) return "/icons/mandiri.png";
-  if (lowerName.includes("bni")) return "/icons/bni.png";
-  if (lowerName.includes("dana")) return "/icons/dana.png";
-  if (lowerName.includes("gopay")) return "/icons/gopay.png";
-  if (lowerName.includes("ovo")) return "/icons/ovo.png";
-  if (lowerName.includes("shopee") || lowerName.includes("spay")) return "/icons/spay.png";
-  if (lowerName.includes("dompet") || lowerName.includes("tunai") || lowerName.includes("cash")) return "/icons/tunai.png";
-  if (lowerName.includes("emas") || lowerName.includes("gold")) return "/icons/emas.png";
+  if (lowerName.includes("keluarga") || lowerName.includes("rumah")) return "/icons/rumah.jpg";
+  if (lowerName.includes("paud") || lowerName.includes("pendidikan") || lowerName.includes("sekolah") || lowerName.includes("anak")) return "/icons/pendidikan.jpg";
+  if (lowerName.includes("spv") || lowerName.includes("dpk")) return "/icons/spv.jpg";
+  if (lowerName.includes("belanja") || lowerName.includes("pasar") || lowerName.includes("dapur") || lowerName.includes("toko")) return "/icons/belanja.jpg";
+  if (lowerName.includes("tabungan") || lowerName.includes("simpanan") || lowerName.includes("investasi") || lowerName.includes("it")) return "/icons/it.jpg";
+  if (lowerName.includes("kantor") || lowerName.includes("usaha") || lowerName.includes("kerja")) return "/icons/kantor.jpg";
+  if (lowerName.includes("hutang") || lowerName.includes("mobil") || lowerName.includes("motor") || lowerName.includes("kendaraan")) return "/icons/mobil.jpg";
   
   return "/icons/umum.jpg";
 };
