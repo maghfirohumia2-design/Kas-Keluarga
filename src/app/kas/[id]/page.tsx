@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
@@ -217,9 +218,17 @@ export default function KasDashboardPage() {
           >
             <ArrowLeft size={18} />
           </Link>
+          <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 p-0.5 relative overflow-hidden shadow-sm shrink-0">
+            <Image
+              src={account.icon || "/icons/umum.jpg"}
+              alt={account.name}
+              fill
+              className="object-cover rounded-xl"
+            />
+          </div>
           <div>
-            <h1 className="text-xl font-black text-slate-800">{account.name}</h1>
-            <p className="text-[11px] text-slate-400 font-medium">Buku Kas & Detail Mutasi</p>
+            <h1 className="text-lg font-black text-slate-800 leading-tight">{account.name}</h1>
+            <p className="text-[10px] text-slate-400 font-medium">Buku Kas & Detail Mutasi</p>
           </div>
         </div>
 
