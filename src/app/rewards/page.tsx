@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Reward, RewardClaim } from "@/types/database";
 import { RewardsSkeleton } from "@/components/ui/Skeleton";
+import FamilyLeaderboard from "@/components/rewards/FamilyLeaderboard";
 
 const PRESET_REWARD_ICONS = ["🎁", "🍦", "🧋", "🎮", "🍕", "🎬", "🎟️", "🧸", "👟", "🍰", "🍔", "🍫", "🍩", "📚"];
 
@@ -268,6 +269,9 @@ export default function RewardsPage() {
         )}
       </header>
 
+      {/* Family Leaderboard Podium */}
+      <FamilyLeaderboard />
+
       {/* Member Points Card */}
       {profile?.role === "member" && (
         <div className="bg-gradient-to-br from-pink-500 via-rose-500 to-pink-600 text-white p-5 rounded-3xl shadow-xl shadow-pink-200/60 mb-6 relative overflow-hidden">
@@ -499,6 +503,37 @@ export default function RewardsPage() {
             </div>
 
             <form onSubmit={handleSaveReward} className="space-y-4">
+              {/* Quick Template Buttons */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Pilih Template Cepat
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { title: "Es Krim Favorit", cost: 15, icon: "🍦" },
+                    { title: "Main Game 1 Jam", cost: 30, icon: "🎮" },
+                    { title: "Pilih Menu Makan Malam", cost: 25, icon: "🍕" },
+                    { title: "Nonton Bioskop Weekend", cost: 50, icon: "🎬" },
+                    { title: "Uang Jajan Tambahan", cost: 40, icon: "💵" },
+                  ].map((tpl) => (
+                    <button
+                      key={tpl.title}
+                      type="button"
+                      onClick={() => {
+                        setRewardTitle(tpl.title);
+                        setRewardCost(tpl.cost.toString());
+                        setRewardIcon(tpl.icon);
+                      }}
+                      className="px-2.5 py-1 bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-700 text-[11px] font-bold rounded-xl transition-colors flex items-center gap-1"
+                    >
+                      <span>{tpl.icon}</span>
+                      <span>{tpl.title}</span>
+                      <span className="text-[10px] opacity-75">({tpl.cost} Pts)</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nama Hadiah
