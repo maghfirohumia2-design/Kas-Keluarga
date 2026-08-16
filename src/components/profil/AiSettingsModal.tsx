@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles, X, Key, Check, ExternalLink, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { testGeminiApiKeyAction } from "@/app/actions/ocr";
 
 interface AiSettingsModalProps {
   isOpen: boolean;
@@ -42,52 +43,17 @@ export default function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProp
     setIsTesting(true);
     setTestResult(null);
 
-    const candidateModels = [
-      "gemini-1.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash-8b",
-      "gemini-1.5-pro",
-      "gemini-pro"
-    ];
-
-    let success = false;
-    let lastErrorMsg = "";
-
-    for (const model of candidateModels) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: "Halo! Jawab dengan 1 kata: OK" }] }],
-          }),
-        });
-
-        if (res.ok) {
-          success = true;
-          setTestResult({
-            success: true,
-            message: `Koneksi ke Google Gemini AI (${model}) Berhasil! Fitur scan struk siap digunakan.`,
-          });
-          break;
-        } else {
-          const err = await res.json().catch(() => ({}));
-          lastErrorMsg = err?.error?.message || `HTTP ${res.status}`;
-        }
-      } catch (err: unknown) {
-        lastErrorMsg = err instanceof Error ? err.message : "Kesalahan jaringan";
-      }
-    }
-
-    if (!success) {
+    try {
+      const res = await testGeminiApiKeyAction(apiKey);
+      setTestResult(res);
+    } catch {
       setTestResult({
         success: false,
-        message: `Gagal menghubungkan ke AI: ${lastErrorMsg}. Pastikan API Key valid dari Google AI Studio.`,
+        message: "Terjadi kesalahan jaringan saat menguji koneksi AI.",
       });
+    } finally {
+      setIsTesting(false);
     }
-
-    setIsTesting(false);
   };
 
   return (
@@ -121,7 +87,7 @@ export default function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProp
           <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl text-xs text-amber-900 leading-relaxed">
             <p className="font-bold mb-1">💡 Dapatkan Gemini API Key Gratis:</p>
             <p className="text-[11px] text-amber-800 mb-2">
-              Anda dapat memperoleh API Key gratis tanpa biaya dari Google AI Studio dalam waktu 1 menit.
+              Anda dapat menggunakan API Key bawaan proyek atau membuat API Key gratis dari Google AI Studio dalam waktu 1 menit.
             </p>
             <a
               href="https://aistudio.google.com/app/apikey"

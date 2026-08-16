@@ -154,3 +154,53 @@ export async function scanReceiptAction({
     };
   }
 }
+
+/**
+ * Server Action untuk menguji validitas API Key Gemini tanpa kendala CORS browser
+ */
+export async function testGeminiApiKeyAction(apiKey: string): Promise<{ success: boolean; message: string }> {
+  const cleanKey = apiKey.trim();
+  if (!cleanKey) {
+    return { success: false, message: "Kunci API tidak boleh kosong." };
+  }
+
+  const candidateModels = [
+    "gemini-1.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-pro"
+  ];
+
+  let lastErrorMsg = "";
+
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Halo! Jawab dengan 1 kata: OK" }] }],
+        }),
+      });
+
+      if (res.ok) {
+        return {
+          success: true,
+          message: `Koneksi ke Google Gemini AI (${model}) Berhasil! Fitur scan struk siap digunakan.`,
+        };
+      } else {
+        const err = await res.json().catch(() => ({}));
+        lastErrorMsg = err?.error?.message || `HTTP ${res.status}`;
+      }
+    } catch (err: unknown) {
+      lastErrorMsg = err instanceof Error ? err.message : "Kesalahan server";
+    }
+  }
+
+  return {
+    success: false,
+    message: `Gagal menghubungkan ke AI: ${lastErrorMsg}. Pastikan API Key valid dari Google AI Studio.`,
+  };
+}
