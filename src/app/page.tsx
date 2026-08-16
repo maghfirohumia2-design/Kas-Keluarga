@@ -14,6 +14,7 @@ import Image from "next/image";
 import { Account } from "@/types/database";
 import { HomeDashboardSkeleton } from "@/components/ui/Skeleton";
 import MultiAccountMatrix from "@/components/home/MultiAccountMatrix";
+import DueBillsNotificationBanner from "@/components/home/DueBillsNotificationBanner";
 
 // Fungsi ikon per kas (Gambar 3D)
 const getIconForAccount = (name: string) => {
@@ -164,6 +165,9 @@ export default function Home() {
 
       {/* Main Content Container */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 pb-28 relative z-10 space-y-5">
+        {/* Due Bills Notification Alert Banner */}
+        <DueBillsNotificationBanner />
+
         {/* Multi-Account Asset Proportion Matrix */}
         <MultiAccountMatrix
           accounts={accountsWithBalance}
