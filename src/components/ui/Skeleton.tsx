@@ -184,3 +184,38 @@ export function LaporanSkeleton() {
     </div>
   );
 }
+
+/**
+ * Skeleton Loader untuk Halaman Tagihan Rutin
+ */
+export function TagihanSkeleton() {
+  return (
+    <div className="p-6 pb-28 min-h-screen bg-slate-50 space-y-5">
+      {/* Header */}
+      <div className="flex justify-between items-center pt-2">
+        <div className="space-y-1.5">
+          <Skeleton className="w-36 h-7" />
+          <Skeleton className="w-52 h-3" />
+        </div>
+        <Skeleton className="w-28 h-9 rounded-2xl" />
+      </div>
+
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <Skeleton className="h-20 rounded-3xl" />
+        <Skeleton className="h-20 rounded-3xl" />
+        <Skeleton className="h-20 rounded-3xl" />
+      </div>
+
+      {/* Tab Filter */}
+      <Skeleton className="w-full h-11 rounded-2xl" />
+
+      {/* Bill Cards List */}
+      <div className="space-y-3.5 pt-1">
+        <Skeleton className="w-full h-36 rounded-3xl" />
+        <Skeleton className="w-full h-36 rounded-3xl" />
+        <Skeleton className="w-full h-36 rounded-3xl" />
+      </div>
+    </div>
+  );
+}

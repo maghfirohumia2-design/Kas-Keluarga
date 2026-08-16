@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { 
   Wallet, 
   Settings,
-  BarChart3
+  BarChart3,
+  Receipt
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -193,24 +194,47 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Quick Analytics & Report Banner */}
-            <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                  <BarChart3 size={20} />
+            {/* Quick Actions Grid: Laporan & Tagihan Rutin */}
+            <div className="mt-6 pt-5 border-t border-slate-100 space-y-2.5">
+              {/* Tagihan Rutin Banner */}
+              <div className="p-3 bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-white rounded-2xl border border-amber-100/80 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
+                    <Receipt size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-800">Tagihan Rutin & Pengingat</h3>
+                    <p className="text-[10px] text-slate-400 font-medium">Pantau listrik, WiFi, SPP & bayar tepat waktu</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xs font-black text-slate-800">Laporan & Ekspor Arus Kas</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Analisis tren, cetak PDF, atau unduh data Excel / CSV</p>
-                </div>
+
+                <Link
+                  href="/tagihan"
+                  className="px-3 py-1.5 bg-white border border-amber-200 text-amber-800 hover:bg-amber-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
+                >
+                  Buka Tagihan
+                </Link>
               </div>
 
-              <Link
-                href="/laporan"
-                className="px-3.5 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm border border-blue-200"
-              >
-                Buka Laporan
-              </Link>
+              {/* Laporan & Ekspor Arus Kas Banner */}
+              <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                    <BarChart3 size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-800">Laporan & Ekspor Arus Kas</h3>
+                    <p className="text-[10px] text-slate-400 font-medium">Analisis tren, cetak PDF, atau unduh CSV/Excel</p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/laporan"
+                  className="px-3 py-1.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 active:scale-95 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm"
+                >
+                  Buka Laporan
+                </Link>
+              </div>
             </div>
 
             {(!accounts || accounts.length === 0) && !accountsError && (

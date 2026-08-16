@@ -13,7 +13,8 @@ import {
   Wallet, 
   UserPlus,
   BarChart3,
-  Sparkles
+  Sparkles,
+  Receipt
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
@@ -195,8 +196,24 @@ export default function ProfilPage() {
           </h3>
           <div className="bg-white rounded-3xl p-2 border border-slate-100 shadow-sm space-y-1">
             <Link
-              href="/laporan"
+              href="/tagihan"
               className="w-full p-3.5 flex items-center justify-between rounded-2xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Receipt size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Tagihan Rutin & Pengingat</h4>
+                  <p className="text-[11px] text-slate-400">Kelola listrik, WiFi, SPP, & status pembayaran</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300" />
+            </Link>
+
+            <Link
+              href="/laporan"
+              className="w-full p-3.5 flex items-center justify-between rounded-2xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left border-t border-slate-50"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">

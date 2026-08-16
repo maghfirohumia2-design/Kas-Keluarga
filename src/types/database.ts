@@ -90,3 +90,19 @@ export interface AdminUser {
   points: number;
   createdAt?: string;
 }
+
+export interface RecurringBill {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;
+  due_day: number; // 1-31
+  account_id?: string | null;
+  icon: string;
+  is_active: boolean;
+  last_paid_at?: string | null;
+  created_at?: string;
+  accounts?: {
+    name: string;
+  } | null;
+}
